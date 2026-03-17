@@ -80,11 +80,15 @@ export default function Sidebar({ user }: Props) {
 
         {/* User info */}
         <div className="hidden lg:flex items-center gap-3 px-3 py-3 mt-2 rounded-xl bg-dark-800 border border-white/5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
             style={{ background: "linear-gradient(135deg, rgba(43,143,191,0.3), rgba(232,23,122,0.3))" }}>
-            <span className="text-brand-300 text-xs font-bold">
-              {user.name?.charAt(0).toUpperCase() ?? "U"}
-            </span>
+            {user.image ? (
+              <img src={user.image} alt={user.name ?? ""} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-brand-300 text-xs font-bold">
+                {user.name?.charAt(0).toUpperCase() ?? "U"}
+              </span>
+            )}
           </div>
           <div className="min-w-0">
             <p className="text-xs font-semibold text-white truncate">{user.name}</p>

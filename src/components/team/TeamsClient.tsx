@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Plus, Users, Crown, UserPlus, Trash2, X, Loader2, Copy, Check, Shield } from "lucide-react";
+import { Plus, Users, Crown, UserPlus, Trash2, X, Loader2, Copy, Check, Shield, Settings } from "lucide-react";
 import type { Team, TeamMemberWithUser } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -133,12 +133,20 @@ export default function TeamsClient({ userId, initialTeams }: Props) {
                   {currentTeam.description && <p className="text-sm text-neutral-400">{currentTeam.description}</p>}
                 </div>
                 {isOwner && (
-                  <button
-                    onClick={() => { setShowInvite(currentTeam.id); setInviteLink(""); }}
-                    className="flex items-center gap-2 bg-dark-700 border border-white/10 text-neutral-300 hover:text-white hover:border-white/20 text-sm px-3 py-2 rounded-xl transition-all"
-                  >
-                    <UserPlus className="w-4 h-4" /> Convidar
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { setShowInvite(currentTeam.id); setInviteLink(""); }}
+                      className="flex items-center gap-2 bg-dark-700 border border-white/10 text-neutral-300 hover:text-white hover:border-white/20 text-sm px-3 py-2 rounded-xl transition-all"
+                    >
+                      <UserPlus className="w-4 h-4" /> Convidar
+                    </button>
+                    <a
+                      href={`/teams/${currentTeam.id}/manage`}
+                      className="flex items-center gap-2 bg-brand-500/15 border border-brand-500/30 text-brand-300 hover:bg-brand-500/25 text-sm px-3 py-2 rounded-xl transition-all"
+                    >
+                      <Settings className="w-4 h-4" /> Gerir
+                    </a>
+                  </div>
                 )}
               </div>
 
@@ -170,79 +178,84 @@ export default function TeamsClient({ userId, initialTeams }: Props) {
             </div>
           )}
         </div>
-      )}
+      )
+      }
 
       {/* Create team modal */}
-      {showCreate && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 w-full max-w-md animate-fade-up">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-semibold text-white text-lg">Nova Equipa</h3>
-              <button onClick={() => setShowCreate(false)} className="text-neutral-500 hover:text-white"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs text-neutral-400 uppercase tracking-wider mb-1.5 block">Nome *</label>
-                <input
-                  value={newTeam.name}
-                  onChange={(e) => setNewTeam({ ...newTeam, name: e.target.value })}
-                  placeholder="Ex: Pedalada do Norte"
-                  className="w-full bg-dark-700 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-brand-500"
-                />
+      {
+        showCreate && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 w-full max-w-md animate-fade-up">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="font-semibold text-white text-lg">Nova Equipa</h3>
+                <button onClick={() => setShowCreate(false)} className="text-neutral-500 hover:text-white"><X className="w-5 h-5" /></button>
               </div>
-              <div>
-                <label className="text-xs text-neutral-400 uppercase tracking-wider mb-1.5 block">Descrição</label>
-                <textarea
-                  value={newTeam.description}
-                  onChange={(e) => setNewTeam({ ...newTeam, description: e.target.value })}
-                  placeholder="Sobre a equipa..."
-                  rows={3}
-                  className="w-full bg-dark-700 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-brand-500 resize-none"
-                />
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-neutral-400 uppercase tracking-wider mb-1.5 block">Nome *</label>
+                  <input
+                    value={newTeam.name}
+                    onChange={(e) => setNewTeam({ ...newTeam, name: e.target.value })}
+                    placeholder="Ex: Pedalada do Norte"
+                    className="w-full bg-dark-700 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-brand-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-neutral-400 uppercase tracking-wider mb-1.5 block">Descrição</label>
+                  <textarea
+                    value={newTeam.description}
+                    onChange={(e) => setNewTeam({ ...newTeam, description: e.target.value })}
+                    placeholder="Sobre a equipa..."
+                    rows={3}
+                    className="w-full bg-dark-700 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-brand-500 resize-none"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowCreate(false)} className="flex-1 py-2.5 rounded-xl bg-dark-700 border border-white/8 text-neutral-400 hover:text-white text-sm transition-all">Cancelar</button>
-              <button onClick={createTeam} disabled={saving || !newTeam.name} className="flex-1 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Criar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Invite modal */}
-      {showInvite && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 w-full max-w-md animate-fade-up">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-semibold text-white text-lg">Convidar Membro</h3>
-              <button onClick={() => setShowInvite(null)} className="text-neutral-500 hover:text-white"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="flex gap-2 mb-4">
-              <input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="email@exemplo.com"
-                className="flex-1 bg-dark-700 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-brand-500"
-              />
-              <button onClick={sendInvite} disabled={saving || !inviteEmail} className="bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm px-4 rounded-xl transition-all disabled:opacity-50 flex items-center gap-2">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-              </button>
-            </div>
-            {inviteLink && (
-              <div className="bg-dark-700 border border-white/8 rounded-xl p-3 flex items-center gap-2">
-                <p className="text-xs text-neutral-400 flex-1 truncate">{inviteLink}</p>
-                <button onClick={copyLink} className="shrink-0 text-neutral-400 hover:text-white transition-colors">
-                  {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => setShowCreate(false)} className="flex-1 py-2.5 rounded-xl bg-dark-700 border border-white/8 text-neutral-400 hover:text-white text-sm transition-all">Cancelar</button>
+                <button onClick={createTeam} disabled={saving || !newTeam.name} className="flex-1 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                  {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Criar
                 </button>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+
+      {/* Invite modal */}
+      {
+        showInvite && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 w-full max-w-md animate-fade-up">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="font-semibold text-white text-lg">Convidar Membro</h3>
+                <button onClick={() => setShowInvite(null)} className="text-neutral-500 hover:text-white"><X className="w-5 h-5" /></button>
+              </div>
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="email@exemplo.com"
+                  className="flex-1 bg-dark-700 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-brand-500"
+                />
+                <button onClick={sendInvite} disabled={saving || !inviteEmail} className="bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm px-4 rounded-xl transition-all disabled:opacity-50 flex items-center gap-2">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                </button>
+              </div>
+              {inviteLink && (
+                <div className="bg-dark-700 border border-white/8 rounded-xl p-3 flex items-center gap-2">
+                  <p className="text-xs text-neutral-400 flex-1 truncate">{inviteLink}</p>
+                  <button onClick={copyLink} className="shrink-0 text-neutral-400 hover:text-white transition-colors">
+                    {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 }

@@ -46,6 +46,7 @@ model User {
   segmentEfforts      StravaSegmentEffort[]
   personalRecord      StravaPersonalRecord?
   competitions        Competition[]
+  teamJoinRequests    TeamJoinRequest[]
 
   @@map("users")
 }
@@ -135,6 +136,7 @@ model Team {
   plannedActivities PlannedActivity[]
   competitions      Competition[]
   tours             Tour[]
+  teamJoinRequests  TeamJoinRequest[]
 
   @@map("teams")
 }
@@ -486,4 +488,26 @@ model StravaPersonalRecord {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("strava_personal_records")
+}
+
+model TeamJoinRequest {
+  id        String                @id @default(cuid())
+  teamId    String
+  userId    String
+  message   String?
+  status    TeamJoinRequestStatus @default(pending)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_join_requests")
+}
+
+enum TeamJoinRequestStatus {
+  pending
+  accepted
+  declined
 }

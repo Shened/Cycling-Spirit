@@ -1,4 +1,4 @@
-# 🚴 Cycling Spirit — Next.js
+# 🚴 Hybrid Nation — Next.js
 
 Stack moderna: **Next.js 15 + Prisma + PostgreSQL (Neon) + NextAuth v5 + Tailwind CSS**
 

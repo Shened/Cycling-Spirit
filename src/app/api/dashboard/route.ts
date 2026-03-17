@@ -100,5 +100,35 @@ export async function GET(req: NextRequest) {
     monthlyActivities: periodActivities.map((a) => ({ ...a, startedAt: a.startedAt.toISOString() })),
   };
 
-  return NextResponse.json(stats);
+  // Competições ativas
+  const now2 = new Date();
+  const activeCompetitions = await prisma.competition.findMany({
+    where: {
+      status: "approved",
+      startDate: { lte: now2 },
+      endDate: { gte: now2 },
+      OR: [
+        { team: { members: { some: { userId: targetUserId } } } },
+        { invites: { some: { userId: targetUserId, status: "accepted" } } },
+        { createdById: targetUserId },
+      ],
+    },
+    select: {
+      id: true, title: true, metric: true, endDate: true,
+      entries: {
+        select: { userId: true, value: true, user: { select: { id: true, name: true } } },
+        orderBy: { value: "desc" },
+        take: 3,
+      },
+    },
+    take: 3,
+  });
+
+  return NextResponse.json({
+    ...stats,
+    activeCompetitions: activeCompetitions.map((c) => ({
+      ...c,
+      endDate: c.endDate.toISOString(),
+    })),
+  });
 }

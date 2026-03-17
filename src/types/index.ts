@@ -110,4 +110,11 @@ export interface DashboardStats {
   weeklyKm: { week: string; km: number }[];
   recentActivities: Activity[];
   monthlyActivities: Activity[];
+  activeCompetitions: {
+    id: string;
+    title: string;
+    metric: string;
+    endDate: string;
+    entries: { userId: string; value: number; user: { id: string; name: string } }[];
+  }[];
 }

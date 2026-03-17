@@ -10,36 +10,42 @@ datasource db {
 }
 
 model User {
-  id                   String    @id @default(cuid())
+  id                   String       @id @default(cuid())
   name                 String
-  email                String    @unique
+  email                String       @unique
   password             String?
   avatar               String?
   weightKg             Float?
   ftpWatts             Int?
-  stravaId             String?   @unique
+  stravaId             String?      @unique
   stravaAccessToken    String?
   stravaRefreshToken   String?
   stravaTokenExpiresAt DateTime?
-  dashboardWidgets     String[]  @default(["distance", "duration", "elevation", "calories", "activities", "avgWatts"])
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  dashboardWidgets     String[]     @default(["distance", "duration", "elevation", "calories", "activities", "avgWatts"])
+  defaultActivityType  ActivityType @default(ride)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
 
   // Relations
   activities          Activity[]
-  ownedTeams          Team[]              @relation("TeamOwner")
+  ownedTeams          Team[]                @relation("TeamOwner")
   teamMemberships     TeamMember[]
-  sentInvitations     TeamInvitation[]    @relation("InvitedBy")
+  sentInvitations     TeamInvitation[]      @relation("InvitedBy")
   plannedActivities   PlannedActivity[]
   competitionEntries  CompetitionEntry[]
+  createdCompetitions Competition[]         @relation("CompetitionCreator")
+  competitionInvites  CompetitionInvite[]
   accounts            Account[]
   sessions            Session[]
-  sentFriendships     Friendship[]        @relation("FriendshipSender")
-  receivedFriendships Friendship[]        @relation("FriendshipReceiver")
-  organisedTours      Tour[]              @relation("TourOrganiser")
+  sentFriendships     Friendship[]          @relation("FriendshipSender")
+  receivedFriendships Friendship[]          @relation("FriendshipReceiver")
+  organisedTours      Tour[]                @relation("TourOrganiser")
   tourParticipations  TourParticipant[]
   tourStageResults    TourStageResult[]
   tourSpecialResults  TourSpecialResult[]
+  segmentEfforts      StravaSegmentEffort[]
+  personalRecord      StravaPersonalRecord?
+  competitions        Competition[]
 
   @@map("users")
 }
@@ -102,10 +108,15 @@ model Activity {
 
 enum ActivityType {
   ride
+  mountain_bike
+  gravel_ride
+  e_bike
+  virtual_ride
   run
+  trail_run
   walk
-  swim
   hike
+  swim
 }
 
 model Team {
@@ -189,20 +200,53 @@ model PlannedActivity {
 }
 
 model Competition {
-  id          String            @id @default(cuid())
-  teamId      String
-  title       String
-  description String?
-  metric      CompetitionMetric
-  startDate   DateTime
-  endDate     DateTime
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id                    String            @id @default(cuid())
+  teamId                String?
+  title                 String
+  description           String?
+  metric                CompetitionMetric
+  eligibleActivityTypes String[]          @default(["ride"])
+  startDate             DateTime
+  endDate               DateTime
+  status                CompetitionStatus @default(approved)
+  createdById           String
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 
-  team    Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  entries CompetitionEntry[]
+  team      Team?               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdBy User                @relation("CompetitionCreator", fields: [createdById], references: [id])
+  entries   CompetitionEntry[]
+  invites   CompetitionInvite[]
+  user      User?               @relation(fields: [userId], references: [id])
+  userId    String?
 
   @@map("competitions")
+}
+
+model CompetitionInvite {
+  id            String                  @id @default(cuid())
+  competitionId String
+  userId        String
+  status        CompetitionInviteStatus @default(pending)
+  createdAt     DateTime                @default(now())
+
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([competitionId, userId])
+  @@map("competition_invites")
+}
+
+enum CompetitionStatus {
+  pending
+  approved
+  rejected
+}
+
+enum CompetitionInviteStatus {
+  pending
+  accepted
+  declined
 }
 
 enum CompetitionMetric {
@@ -400,4 +444,46 @@ model TourSpecialResult {
 
   @@unique([specialPointId, userId])
   @@map("tour_special_results")
+}
+
+model StravaSegmentEffort {
+  id             String   @id @default(cuid())
+  userId         String
+  segmentId      String
+  segmentName    String
+  distanceM      Float
+  elapsedSeconds Int
+  startDate      DateTime
+  komRank        Int?
+  prRank         Int?
+  avgGrade       Float?
+  city           String?
+  country        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, segmentId])
+  @@map("strava_segment_efforts")
+}
+
+model StravaPersonalRecord {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  longestDistanceKm   Float    @default(0)
+  longestActivityId   String?
+  highestElevationM   Int      @default(0)
+  highestElevationId  String?
+  fastestSpeedKmh     Float    @default(0)
+  fastestSpeedId      String?
+  highestWatts        Int      @default(0)
+  highestWattsId      String?
+  longestDurationSecs Int      @default(0)
+  longestDurationId   String?
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("strava_personal_records")
 }

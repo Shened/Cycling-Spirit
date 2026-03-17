@@ -297,6 +297,62 @@ export default function DashboardClient({ user }: Props) {
         )
       }
 
+      {/* Competições ativas */}
+      {stats?.activeCompetitions && stats.activeCompetitions.length > 0 && (
+        <div className="animate-fade-up delay-400 bg-dark-800 border border-white/5 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-white">Competições Ativas</h2>
+            <a href="/competitions" className="text-xs text-brand-400 hover:text-brand-300 transition-colors">
+              Ver todas →
+            </a>
+          </div>
+          <div className="space-y-3">
+            {stats.activeCompetitions.map((comp) => {
+              const sorted = [...comp.entries].sort((a, b) => b.value - a.value);
+              const myEntry = sorted.find((e) => e.userId === user.id);
+              const myRank = sorted.findIndex((e) => e.userId === user.id) + 1;
+              const daysLeft = Math.ceil((new Date(comp.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+              return (
+                <div key={comp.id} className="p-4 bg-dark-700 rounded-xl border border-white/5 hover:border-white/10 transition-all">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">{comp.title}</p>
+                      <p className="text-xs text-neutral-500 mt-0.5">
+                        {daysLeft > 0 ? `${daysLeft} dias restantes` : "Termina hoje"}
+                      </p>
+                    </div>
+                    {myEntry && myRank > 0 && (
+                      <div className="text-right shrink-0">
+                        <p className="text-lg font-display text-gradient">{myRank}º</p>
+                        <p className="text-xs text-neutral-500 font-mono">{myEntry.value.toFixed(1)}</p>
+                      </div>
+                    )}
+                  </div>
+                  {/* Top 3 */}
+                  <div className="space-y-1">
+                    {sorted.slice(0, 3).map((entry, idx) => (
+                      <div key={entry.userId} className="flex items-center gap-2">
+                        <span className={cn(
+                          "w-4 h-4 rounded text-xs font-bold flex items-center justify-center shrink-0",
+                          idx === 0 ? "text-yellow-400" :
+                            idx === 1 ? "text-neutral-300" :
+                              "text-amber-600"
+                        )}>
+                          {idx + 1}
+                        </span>
+                        <span className="text-xs text-neutral-300 flex-1 truncate">{entry.user.name}</span>
+                        <span className="text-xs font-mono text-brand-400">{entry.value.toFixed(1)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Recent activities */}
       {
         stats?.recentActivities && stats.recentActivities.length > 0 && (

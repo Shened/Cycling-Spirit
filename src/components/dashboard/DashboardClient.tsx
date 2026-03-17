@@ -157,10 +157,10 @@ export default function DashboardClient({ user }: Props) {
               <button
                 onClick={handleStravaSync}
                 disabled={syncing}
-                className="flex items-center justify-center w-9 h-9 bg-[#FC4C02]/10 border border-[#FC4C02]/25 text-[#FC4C02] hover:bg-[#FC4C02]/20 rounded-xl transition-all disabled:opacity-50"
-                title="Sincronizar Strava"
+                className="flex items-center gap-2 bg-[#FC4C02]/10 border border-[#FC4C02]/25 text-[#FC4C02] hover:bg-[#FC4C02]/20 rounded-xl transition-all disabled:opacity-50 px-3 h-9"
               >
-                {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                {syncing ? <Loader2 className="w-4 h-4 animate-spin shrink-0" /> : <RefreshCw className="w-4 h-4 shrink-0" />}
+                <span className="hidden sm:inline text-xs font-medium">Sync Strava</span>
               </button>
             )}
             <button

@@ -223,32 +223,35 @@ export default function CalendarClient({ userId, teams }: Props) {
   return (
     <div className="space-y-5 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-up">
-        <div>
-          <h1 className="font-display text-3xl text-white tracking-wide">CALENDÁRIO</h1>
-          <p className="text-neutral-500 text-sm mt-0.5">Planeia os teus treinos</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {teams.length > 0 && (
-            <div className="relative">
-              <select
-                value={selectedTeam ?? ""}
-                onChange={(e) => setSelectedTeam(e.target.value || null)}
-                className="appearance-none bg-dark-800 border border-white/10 text-white text-sm rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:border-brand-500 cursor-pointer"
-              >
-                <option value="">Os meus treinos</option>
-                {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
-            </div>
-          )}
+      <div className="space-y-3 animate-fade-up">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl text-white tracking-wide">CALENDÁRIO</h1>
+            <p className="text-neutral-500 text-sm mt-0.5">Planeia os teus treinos</p>
+          </div>
           <button
             onClick={() => openForm()}
-            className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all"
+            className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shrink-0"
           >
-            <Plus className="w-4 h-4" /> Novo Treino
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Novo Treino</span>
+            <span className="sm:hidden">Novo</span>
           </button>
         </div>
+        {/* Select de equipa numa linha separada */}
+        {teams.length > 0 && (
+          <div className="relative w-full sm:w-auto">
+            <select
+              value={selectedTeam ?? ""}
+              onChange={(e) => setSelectedTeam(e.target.value || null)}
+              className="w-full sm:w-auto appearance-none bg-dark-800 border border-white/10 text-white text-sm rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:border-brand-500 cursor-pointer"
+            >
+              <option value="">Os meus treinos</option>
+              {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
+          </div>
+        )}
       </div>
 
       {/* Calendar */}

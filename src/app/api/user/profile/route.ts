@@ -11,6 +11,7 @@ const schema = z.object({
     "ride", "mountain_bike", "gravel_ride", "e_bike", "virtual_ride",
     "run", "trail_run", "walk", "hike", "swim"
   ]).optional(),
+  isPublic: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -22,7 +23,7 @@ export async function GET() {
     select: {
       id: true, name: true, email: true, avatar: true,
       ftpWatts: true, weightKg: true, stravaId: true,
-      dashboardWidgets: true, defaultActivityType: true,
+      dashboardWidgets: true, defaultActivityType: true, isPublic: true,
     },
   });
 

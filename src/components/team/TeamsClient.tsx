@@ -68,7 +68,7 @@ export default function TeamsClient({ userId, initialTeams }: Props) {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between animate-fade-up">
+      {/* <div className="flex items-center justify-between animate-fade-up">
         <div>
           <h1 className="font-display text-3xl text-white tracking-wide">EQUIPAS</h1>
           <p className="text-neutral-500 text-sm mt-0.5">Treina e compite com os teus colegas</p>
@@ -78,6 +78,21 @@ export default function TeamsClient({ userId, initialTeams }: Props) {
           className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all"
         >
           <Plus className="w-4 h-4" /> Nova Equipa
+        </button>
+      </div> */}
+
+      <div className="flex items-center justify-between gap-4 animate-fade-up">
+        <div className="min-w-0">
+          <h1 className="font-display text-3xl text-white tracking-wide truncate">EQUIPAS</h1>
+          <p className="text-neutral-500 text-sm mt-0.5 ">Treina e compite com os teus colegas</p>
+        </div>
+        <button
+          onClick={() => setShowCreate(true)}
+          className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span className="hidden sm:inline">Criar Equipa</span>
+          <span className="sm:hidden">Criar</span>
         </button>
       </div>
 
@@ -123,57 +138,71 @@ export default function TeamsClient({ userId, initialTeams }: Props) {
 
           {/* Team detail */}
           {currentTeam && (
-            <div className="lg:col-span-3 bg-dark-800 border border-white/5 rounded-2xl p-6">
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <h2 className="text-xl font-bold text-white">{currentTeam.name}</h2>
-                    {isOwner && <span className="text-xs bg-brand-500/15 text-brand-300 border border-brand-500/25 px-2 py-0.5 rounded-full">Team Manager</span>}
+            <div className="lg:col-span-3 bg-dark-800 border border-white/5 rounded-2xl p-5">
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 mb-5">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-xl font-bold text-white truncate">{currentTeam.name}</h2>
+                    {isOwner && (
+                      <span className="text-xs bg-brand-500/15 text-brand-300 border border-brand-500/25 px-2 py-0.5 rounded-full shrink-0">
+                        Manager
+                      </span>
+                    )}
                   </div>
-                  {currentTeam.description && <p className="text-sm text-neutral-400">{currentTeam.description}</p>}
+                  {currentTeam.description && (
+                    <p className="text-sm text-neutral-400 mt-1">{currentTeam.description}</p>
+                  )}
                 </div>
+
                 {isOwner && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => { setShowInvite(currentTeam.id); setInviteLink(""); }}
-                      className="flex items-center gap-2 bg-dark-700 border border-white/10 text-neutral-300 hover:text-white hover:border-white/20 text-sm px-3 py-2 rounded-xl transition-all"
+                      className="flex items-center justify-center w-9 h-9 bg-dark-700 border border-white/10 text-neutral-400 hover:text-white hover:border-white/20 rounded-xl transition-all"
+                      title="Convidar"
                     >
-                      <UserPlus className="w-4 h-4" /> Convidar
+                      <UserPlus className="w-4 h-4" />
                     </button>
                     <a
                       href={`/teams/${currentTeam.id}/manage`}
-                      className="flex items-center gap-2 bg-brand-500/15 border border-brand-500/30 text-brand-300 hover:bg-brand-500/25 text-sm px-3 py-2 rounded-xl transition-all"
+                      className="flex items-center justify-center w-9 h-9 bg-brand-500/15 border border-brand-500/30 text-brand-300 hover:bg-brand-500/25 rounded-xl transition-all"
+                      title="Gerir equipa"
                     >
-                      <Settings className="w-4 h-4" /> Gerir
+                      <Settings className="w-4 h-4" />
                     </a>
                   </div>
                 )}
               </div>
 
-              {/* Members list */}
-              <div>
-                <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">Membros</p>
-                <div className="space-y-2">
-                  {currentTeam.members?.map((member) => (
-                    <div key={member.userId} className="flex items-center gap-3 p-3 bg-dark-700 rounded-xl border border-white/5">
-                      <div className="w-8 h-8 bg-dark-600 rounded-lg flex items-center justify-center shrink-0">
+              {/* Members */}
+              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">
+                Membros ({currentTeam.members?.length ?? 0})
+              </p>
+              <div className="space-y-2">
+                {currentTeam.members?.map((member) => (
+                  <div key={member.userId} className="flex items-center gap-3 p-3 bg-dark-700 rounded-xl border border-white/5">
+                    <div className="w-8 h-8 bg-dark-600 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+                      {member.user.avatar ? (
+                        <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover rounded-lg" />
+                      ) : (
                         <span className="text-xs font-bold text-neutral-300">
                           {member.user.name.charAt(0).toUpperCase()}
                         </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-medium text-white truncate">{member.user.name}</p>
-                          {roleIcon(member.role)}
-                        </div>
-                        <p className="text-xs text-neutral-500 truncate">{member.user.email}</p>
-                      </div>
-                      <span className="text-xs text-neutral-500 bg-dark-600 px-2 py-0.5 rounded-full shrink-0">
-                        {roleLabel[member.role]}
-                      </span>
+                      )}
                     </div>
-                  ))}
-                </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium text-white truncate">{member.user.name}</p>
+                        {roleIcon(member.role)}
+                      </div>
+                      <p className="text-xs text-neutral-500 truncate">{member.user.email}</p>
+                    </div>
+                    <span className="text-xs text-neutral-500 bg-dark-600 px-2 py-0.5 rounded-full shrink-0">
+                      {roleLabel[member.role]}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           )}

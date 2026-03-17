@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
         const where = {
             userId,
             ...(filter === "koms" ? { komRank: 1 } : {}),
-            ...(filter === "top10" ? { prRank: { lte: 10 } } : {}),
+            ...(filter === "top10" ? { komRank: { gte: 1, lte: 10 } } : {}),
         };
 
         const [efforts, pr] = await Promise.all([
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
             personalRecord: pr,
             stats: {
                 totalKoms: efforts.filter((e) => e.komRank === 1).length,
-                totalTop10: efforts.filter((e) => (e.prRank ?? 99) <= 10).length,
+                totalTop10: efforts.filter((e) => (e.komRank ?? 99) <= 10).length,
                 total: efforts.length,
             },
         });

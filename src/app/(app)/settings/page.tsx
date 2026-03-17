@@ -11,7 +11,7 @@ export default async function SettingsPage() {
     select: {
       id: true, name: true, email: true, avatar: true,
       ftpWatts: true, weightKg: true, stravaId: true,
-      defaultActivityType: true,
+      defaultActivityType: true, isPublic: true,
     },
   });
 

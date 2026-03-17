@@ -157,16 +157,18 @@ export default function CompetitionsClient({ userId, teams, allUsers = [] }: Pro
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-up">
-        <div>
-          <h1 className="font-display text-3xl text-white tracking-wide">COMPETIÇÕES</h1>
+      <div className="flex items-center justify-between gap-4 animate-fade-up">
+        <div className="min-w-0">
+          <h1 className="font-display text-3xl text-white tracking-wide truncate">COMPETIÇÕES</h1>
           <p className="text-neutral-500 text-sm mt-0.5">Compete com a tua equipa ou amigos</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all"
+          className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shrink-0"
         >
-          <Plus className="w-4 h-4" /> Nova Competição
+          <Plus className="w-4 h-4" />
+          <span className="hidden sm:inline">Nova Competição</span>
+          <span className="sm:hidden">Criar</span>
         </button>
       </div>
 
@@ -275,14 +277,23 @@ export default function CompetitionsClient({ userId, teams, allUsers = [] }: Pro
             const pendingInvites = comp.invites.filter((i) => i.status === "pending");
 
             return (
-
               <div
                 key={comp.id}
-                className="bg-dark-800 border border-white/5 rounded-2xl p-6 cursor-pointer hover:border-white/10 transition-all"
+                className="relative bg-dark-800 border border-white/5 rounded-2xl p-6 cursor-pointer hover:border-white/10 transition-all"
                 style={{ animationDelay: `${i * 80}ms` }}
                 onClick={() => setSelectedCompetition(comp)}
               >
-                <div className="flex items-start justify-between mb-4 gap-4 flex-wrap">
+                {/* Botão eliminar — canto superior direito */}
+                {canDelete && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteCompetition(comp.id); }}
+                    className="absolute top-4 right-4 w-7 h-7 rounded-lg bg-dark-700 border border-white/8 text-neutral-500 hover:text-red-400 hover:border-red-500/20 flex items-center justify-center transition-all z-10"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+
+                <div className="flex items-start justify-between mb-4 gap-4 flex-wrap pr-8">
                   <div>
                     <div className="flex items-center gap-3 mb-1 flex-wrap">
                       <h3 className="font-bold text-white text-lg">{comp.title}</h3>
@@ -304,34 +315,25 @@ export default function CompetitionsClient({ userId, teams, allUsers = [] }: Pro
                       </span>
                       <span className="flex items-center gap-1">
                         <Users className="w-3 h-3" />
-                        {acceptedInvites.length + (comp.team ? 0 : 1)} participantes
+                        {sorted.length} participantes
                         {pendingInvites.length > 0 && <span className="text-yellow-400">• {pendingInvites.length} pendentes</span>}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {myEntry && myRank > 0 && (
-                      <div className="text-right">
-                        <p className="text-2xl font-display text-gradient">{myRank}º</p>
-                        <p className="text-xs text-neutral-500">{myEntry.value.toFixed(1)}</p>
-                      </div>
-                    )}
-                    {canDelete && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteCompetition(comp.id); }}
-                        className="w-8 h-8 rounded-lg bg-dark-700 border border-white/8 text-neutral-500 hover:text-red-400 hover:border-red-500/20 flex items-center justify-center transition-all"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
+
+                  {myEntry && myRank > 0 && (
+                    <div className="text-right shrink-0">
+                      <p className="text-2xl font-display text-gradient">{myRank}º</p>
+                      <p className="text-xs text-neutral-500 font-mono">{myEntry.value.toFixed(1)}</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Leaderboard */}
                 {sorted.length > 0 && (
                   <div className="space-y-2 mt-4 border-t border-white/5 pt-4">
                     <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">Classificação</p>
-                    {sorted.slice(0, 5).map((entry, idx) => (
+                    {sorted.slice(0, 3).map((entry, idx) => (
                       <div key={entry.userId} className={cn("flex items-center gap-3 p-2.5 rounded-xl",
                         entry.userId === userId ? "bg-brand-500/8 border border-brand-500/15" : "bg-dark-700"
                       )}>

@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Bike, Clock, Mountain, Flame, BarChart2, Zap,
   Wind, Heart, RefreshCw, Settings2, Check, X,
-  ChevronDown, TrendingUp, Activity
+  ChevronDown, TrendingUp, Activity, SlidersHorizontal, Loader2
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -133,101 +133,109 @@ export default function DashboardClient({ user }: Props) {
     );
   };
 
+  const handleStravaSync = async () => {
+    setSyncing(true);
+    const res = await fetch("/api/strava/sync", { method: "POST" });
+    const data = await res.json();
+    setSyncing(false);
+    alert(data.message ?? data.error);
+    fetchStats();
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-up">
-        <div>
-          <h1 className="font-display text-3xl text-white tracking-wide">DASHBOARD</h1>
-          <p className="text-neutral-500 text-sm mt-0.5">Estatísticas {PERIOD_LABELS[period]}</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {contextOptions.length > 1 && (
-            <div className="relative">
-              <select
-                value={`${selectedContext.type}:${selectedContext.id}`}
-                onChange={(e) => {
-                  const [type, id] = e.target.value.split(":");
-                  const opt = contextOptions.find((o) => o.type === type && o.id === id);
-                  if (opt) setSelectedContext(opt);
-                }}
-                className="appearance-none bg-dark-800 border border-white/10 text-white text-sm rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:border-brand-500 cursor-pointer"
+      <div className="space-y-3 animate-fade-up">
+        {/* Título + botões de ação */}
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="font-display text-3xl text-white tracking-wide">DASHBOARD</h1>
+            <p className="text-neutral-500 text-sm mt-0.5">Estatísticas este mês</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {user.stravaId && (
+              <button
+                onClick={handleStravaSync}
+                disabled={syncing}
+                className="flex items-center justify-center w-9 h-9 bg-[#FC4C02]/10 border border-[#FC4C02]/25 text-[#FC4C02] hover:bg-[#FC4C02]/20 rounded-xl transition-all disabled:opacity-50"
+                title="Sincronizar Strava"
               >
-                {contextOptions.map((o) => (
-                  <option key={`${o.type}:${o.id}`} value={`${o.type}:${o.id}`}>{o.label}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" />
-            </div>
-          )}
-
-          {user.stravaId && (
+                {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              </button>
+            )}
             <button
-              onClick={syncStrava}
-              disabled={syncing}
-              className="flex items-center gap-2 bg-[#FC4C02]/10 border border-[#FC4C02]/30 text-[#FC4C02] hover:bg-[#FC4C02]/20 text-sm font-medium px-4 py-2.5 rounded-xl transition-all disabled:opacity-50"
+              onClick={() => setEditingWidgets(true)}
+              className="flex items-center justify-center w-9 h-9 bg-dark-800 border border-white/10 text-neutral-400 hover:text-white hover:border-white/20 rounded-xl transition-all"
+              title="Personalizar widgets"
             >
-              <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-              {syncing ? "A sincronizar..." : "Sync Strava"}
+              <SlidersHorizontal className="w-4 h-4" />
             </button>
-          )}
-          {!user.stravaId && (
-            <a
-              href="/api/strava/connect"
-              className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all"
-              style={{ background: "#FC4C02" }}
-            >
-              <Activity className="w-4 h-4" />
-              Ligar Strava
-            </a>
-          )}
-          <button
-            onClick={() => setEditingWidgets(true)}
-            className="flex items-center gap-2 bg-dark-800 border border-white/10 text-neutral-400 hover:text-white hover:border-white/20 text-sm px-4 py-2.5 rounded-xl transition-all"
-          >
-            <Settings2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Personalizar</span>
-          </button>
+          </div>
         </div>
-      </div>
 
-      {/* Period switcher */}
-      <div className="flex items-center gap-1.5 animate-fade-up delay-100 bg-dark-800 border border-white/5 rounded-xl p-1 w-fit">
-        {PERIODS.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setPeriod(value)}
-            className="relative px-5 py-2 rounded-lg text-sm font-medium transition-all"
-            style={period === value ? {
-              background: "linear-gradient(135deg, rgba(43,143,191,0.2), rgba(232,23,122,0.2))",
-              color: "#fff",
-            } : { color: "#737373" }}
-          >
-            {period === value && (
-              <span className="absolute inset-0 rounded-lg border border-brand-500/30" />
-            )}
-            {label}
-          </button>
-        ))}
-      </div>
+        {/* Context + Period */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          {/* Context selector */}
+          <div className="relative w-fit">
+            <select
+              value={selectedContext.id}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === user.id) setSelectedContext({ type: "user", id: user.id, label: "O meu Dashboard" });
+                else setSelectedContext({ type: "team", id: val, label: user.teamMemberships.find((m) => m.team.id === val)?.team.name ?? "" });
+              }}
+              className="appearance-none bg-dark-800 border border-white/10 text-white text-xs rounded-xl pl-3 pr-8 py-2 focus:outline-none focus:border-brand-500 cursor-pointer"
+            >
+              <option value={user.id}>O meu Dashboard</option>
+              {user.teamMemberships.map((m) => (
+                <option key={m.team.id} value={m.team.id}>{m.team.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-500 pointer-events-none" />
+          </div>
 
-      {/* Activity type filter */}
-      <div className="flex items-center gap-1.5 animate-fade-up delay-150 flex-wrap">
-        {ACTIVITY_FILTERS.map(({ value, label, emoji }) => (
-          <button
-            key={value}
-            onClick={() => setActivityType(value)}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all",
-              activityType === value
-                ? "bg-brand-500/15 border-brand-500/35 text-brand-300"
-                : "bg-dark-800 border-white/8 text-neutral-500 hover:border-white/15 hover:text-neutral-300"
-            )}
-          >
-            <span>{emoji}</span>
-            <span>{label}</span>
-          </button>
-        ))}
+          <div className="hidden sm:block h-4 w-px bg-white/10" />
+
+          {/* Period tabs */}
+          <div className="flex items-center gap-1 bg-dark-900 border border-white/10 rounded-xl p-1 w-fit">
+            {PERIODS.map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setPeriod(value)}
+                className={cn(
+                  "px-4 py-1.5 rounded-lg text-xs font-medium transition-all",
+                  period === value
+                    ? "bg-brand-500/20 text-white border border-brand-500/30"
+                    : "text-neutral-500 hover:text-neutral-200"
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Activity type filter */}
+        <div className="pt-2">
+          <p className="text-xs text-neutral-500 tracking-wider mb-2">Seleciona as Atividades</p>
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
+            {ACTIVITY_FILTERS.map(({ value, label, emoji }) => (
+              <button
+                key={value}
+                onClick={() => setActivityType(value)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all shrink-0",
+                  activityType === value
+                    ? "bg-brand-500/15 border-brand-500/35 text-brand-300"
+                    : "bg-dark-800 border-white/8 text-neutral-500 hover:border-white/15 hover:text-neutral-300"
+                )}
+              >
+                <span>{emoji}</span>
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Stats widgets */}
@@ -392,11 +400,20 @@ export default function DashboardClient({ user }: Props) {
       {/* Widget editor modal */}
       {
         editingWidgets && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-dark-800 border border-white/10 rounded-2xl p-6 w-full max-w-md animate-fade-up">
+          <div
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setEditingWidgets(false)}
+          >
+            <div
+              className="bg-dark-800 border border-white/10 rounded-2xl p-6 w-full max-w-md animate-fade-up"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between mb-5">
                 <h3 className="font-semibold text-white text-lg">Personalizar Dashboard</h3>
-                <button onClick={() => setEditingWidgets(false)} className="text-neutral-500 hover:text-white">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditingWidgets(false); }}
+                  className="text-neutral-500 hover:text-white"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>

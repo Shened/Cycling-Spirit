@@ -25,6 +25,7 @@ model User {
   defaultActivityType  ActivityType @default(ride)
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
+  isPublic             Boolean      @default(true)
 
   // Relations
   activities          Activity[]

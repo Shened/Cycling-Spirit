@@ -106,16 +106,18 @@ export default function TourListClient({ userId, teams, allUsers }: Props) {
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
             {/* Header */}
-            <div className="flex items-center justify-between animate-fade-up">
-                <div>
-                    <h1 className="font-display text-3xl text-white tracking-wide">TOUR</h1>
+            <div className="flex items-center justify-between gap-4 animate-fade-up">
+                <div className="min-w-0">
+                    <h1 className="font-display text-3xl text-white tracking-wide truncate">TOUR</h1>
                     <p className="text-neutral-500 text-sm mt-0.5">Organiza e compete no teu tour</p>
                 </div>
                 <button
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all"
+                    className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shrink-0"
                 >
-                    <Plus className="w-4 h-4" /> Criar Tour
+                    <Plus className="w-4 h-4" />
+                    <span className="hidden sm:inline">Criar Tour</span>
+                    <span className="sm:hidden">Criar</span>
                 </button>
             </div>
 
@@ -150,7 +152,7 @@ export default function TourListClient({ userId, teams, allUsers }: Props) {
                                 style={{ animationDelay: `${i * 60}ms` }}
                             >
                                 {/* Top */}
-                                <div className="flex items-start justify-between gap-3 mb-4">
+                                <div className="flex items-start justify-between gap-3 mb-3">
                                     <div className="flex items-center gap-3">
                                         <div
                                             className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -158,8 +160,8 @@ export default function TourListClient({ userId, teams, allUsers }: Props) {
                                         >
                                             <Flag className="w-5 h-5 text-white" />
                                         </div>
-                                        <div>
-                                            <p className="font-bold text-white group-hover:text-brand-300 transition-colors">{tour.name}</p>
+                                        <div className="min-w-0">
+                                            <p className="font-bold text-white group-hover:text-brand-300 transition-colors truncate">{tour.name}</p>
                                             <p className="text-xs text-neutral-500">{TYPE_LABELS[tour.type]}</p>
                                         </div>
                                     </div>
@@ -169,28 +171,28 @@ export default function TourListClient({ userId, teams, allUsers }: Props) {
                                 </div>
 
                                 {/* Info */}
-                                <div className="flex items-center gap-4 text-xs text-neutral-500 mb-3">
+                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500 mb-3">
                                     <span className="flex items-center gap-1">
-                                        <Calendar className="w-3.5 h-3.5" />
+                                        <Calendar className="w-3.5 h-3.5 shrink-0" />
                                         {format(parseISO(tour.startDate), "d MMM", { locale: pt })} → {format(parseISO(tour.endDate), "d MMM yyyy", { locale: pt })}
                                     </span>
                                     <span className="flex items-center gap-1">
-                                        <Users className="w-3.5 h-3.5" />
+                                        <Users className="w-3.5 h-3.5 shrink-0" />
                                         {tour._count.participants} participantes
                                     </span>
                                     <span className="flex items-center gap-1">
-                                        <MapPin className="w-3.5 h-3.5" />
+                                        <MapPin className="w-3.5 h-3.5 shrink-0" />
                                         {tour._count.stages} etapas
                                     </span>
                                 </div>
 
                                 {/* Footer */}
-                                <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                                    <p className="text-xs text-neutral-500">
-                                        Organizado por <span className="text-neutral-300">{tour.organiser.name}</span>
+                                <div className="flex items-center justify-between pt-3 border-t border-white/5 gap-2">
+                                    <p className="text-xs text-neutral-500 truncate">
+                                        Por <span className="text-neutral-300">{tour.organiser.name}</span>
                                     </p>
                                     {tour.team && (
-                                        <span className="text-xs bg-brand-500/10 text-brand-400 border border-brand-500/20 px-2 py-0.5 rounded-full">
+                                        <span className="text-xs bg-brand-500/10 text-brand-400 border border-brand-500/20 px-2 py-0.5 rounded-full shrink-0 truncate max-w-[120px]">
                                             {tour.team.name}
                                         </span>
                                     )}

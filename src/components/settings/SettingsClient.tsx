@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, User, Zap, Activity, Check, Unlink, Bike, Mountain, PersonStanding, Footprints, Waves, Monitor } from "lucide-react";
+import { Loader2, User, Zap, Activity, Check, Unlink, Bike, Mountain, PersonStanding, Footprints, Waves, Monitor, Eye, EyeOff } from "lucide-react";
 import { activityTypeLabel, activityTypeIcon, cn } from "@/lib/utils";
 
 const ACTIVITY_TYPES = [
@@ -13,7 +13,7 @@ interface Props {
   user: {
     id: string; name: string; email: string; avatar?: string | null;
     ftpWatts?: number | null; weightKg?: number | null; stravaId?: string | null;
-    defaultActivityType?: string | null;
+    defaultActivityType?: string | null; isPublic?: boolean | null;
   };
 }
 
@@ -24,6 +24,7 @@ export default function SettingsClient({ user }: Props) {
     ftpWatts: user.ftpWatts?.toString() ?? "",
     weightKg: user.weightKg?.toString() ?? "",
     defaultActivityType: user.defaultActivityType ?? "ride",
+    isPublic: user.isPublic ?? true,
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -39,6 +40,7 @@ export default function SettingsClient({ user }: Props) {
         ftpWatts: form.ftpWatts ? parseInt(form.ftpWatts) : null,
         weightKg: form.weightKg ? parseFloat(form.weightKg) : null,
         defaultActivityType: form.defaultActivityType,
+        isPublic: form.isPublic,
       }),
     });
     setSaving(false);
@@ -123,6 +125,54 @@ export default function SettingsClient({ user }: Props) {
             </div>
           </div>
 
+          {/* Visibilidade do perfil */}
+          <div>
+            <label className="text-xs text-neutral-400 uppercase tracking-wider mb-1.5 block">
+              Visibilidade do Perfil
+            </label>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, isPublic: !form.isPublic })}
+              className={cn(
+                "w-full flex items-center justify-between p-3 rounded-xl border transition-all",
+                form.isPublic
+                  ? "border-brand-500/40 bg-brand-500/10"
+                  : "border-white/8 bg-dark-700"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-8 h-8 rounded-lg flex items-center justify-center",
+                  form.isPublic ? "bg-brand-500/20" : "bg-dark-600"
+                )}>
+                  {form.isPublic
+                    ? <Eye className="w-4 h-4 text-brand-400" />
+                    : <EyeOff className="w-4 h-4 text-neutral-500" />
+                  }
+                </div>
+                <div className="text-left">
+                  <p className={cn("text-sm font-medium", form.isPublic ? "text-white" : "text-neutral-400")}>
+                    {form.isPublic ? "Perfil Público" : "Perfil Privado"}
+                  </p>
+                  <p className="text-xs text-neutral-500">
+                    {form.isPublic
+                      ? "Qualquer utilizador pode ver o teu perfil"
+                      : "Só os teus amigos podem ver o teu perfil"}
+                  </p>
+                </div>
+              </div>
+              <div className={cn(
+                "w-10 h-6 rounded-full transition-all relative shrink-0",
+                form.isPublic ? "bg-brand-500" : "bg-dark-600 border border-white/15"
+              )}>
+                <div className={cn(
+                  "absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all",
+                  form.isPublic ? "left-5" : "left-1"
+                )} />
+              </div>
+            </button>
+          </div>
+
           {/* Default activity type */}
           <div>
             <label className="text-xs text-neutral-400 uppercase tracking-wider mb-1.5 block">
@@ -185,18 +235,18 @@ export default function SettingsClient({ user }: Props) {
             <p className="text-sm text-neutral-400">
               A tua conta Strava está ligada. As atividades são importadas automaticamente desde o início do ano.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-2">
               <button
                 onClick={handleStravaSync}
                 disabled={syncing}
-                className="flex items-center gap-2 bg-[#FC4C02]/10 border border-[#FC4C02]/25 text-[#FC4C02] hover:bg-[#FC4C02]/20 text-sm font-medium px-4 py-2.5 rounded-xl transition-all disabled:opacity-50"
+                className="flex items-center justify-center gap-2 bg-[#FC4C02]/10 border border-[#FC4C02]/25 text-[#FC4C02] hover:bg-[#FC4C02]/20 text-sm font-medium px-4 py-2.5 rounded-xl transition-all disabled:opacity-50"
               >
                 {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
                 {syncing ? "A sincronizar..." : "Sincronizar agora"}
               </button>
               <button
                 onClick={handleStravaDisconnect}
-                className="flex items-center gap-2 bg-dark-700 border border-white/8 text-neutral-400 hover:text-red-400 hover:border-red-500/20 text-sm px-4 py-2.5 rounded-xl transition-all"
+                className="flex items-center justify-center gap-2 bg-dark-700 border border-white/8 text-neutral-400 hover:text-red-400 hover:border-red-500/20 text-sm px-4 py-2.5 rounded-xl transition-all"
               >
                 <Unlink className="w-4 h-4" /> Desligar
               </button>

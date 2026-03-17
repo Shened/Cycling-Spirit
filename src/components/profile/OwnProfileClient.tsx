@@ -66,7 +66,6 @@ export default function OwnProfileClient({ user }: Props) {
     const [efforts, setEfforts] = useState<SegmentEffort[]>([]);
     const [pr, setPr] = useState<PersonalRecord | null>(null);
     const [komStats, setKomStats] = useState<KomStats | null>(null);
-    const [komFilter, setKomFilter] = useState<"all" | "koms" | "top10">("koms");
     const [loadingKoms, setLoadingKoms] = useState(true);
     const totalFriends = user._count.sentFriendships + user._count.receivedFriendships;
 
@@ -92,7 +91,7 @@ export default function OwnProfileClient({ user }: Props) {
         if (!user.stravaId) { setLoadingKoms(false); return; }
         const fetchKoms = async () => {
             setLoadingKoms(true);
-            const res = await fetch(`/api/strava/koms?filter=${komFilter}`);
+            const res = await fetch(`/api/strava/koms?filter=koms`);
             if (res.ok) {
                 const data = await res.json();
                 setEfforts(data.efforts ?? []);
@@ -102,7 +101,7 @@ export default function OwnProfileClient({ user }: Props) {
             setLoadingKoms(false);
         };
         fetchKoms();
-    }, [user.stravaId, komFilter]);
+    }, [user.stravaId]);
 
     return (
         <div className="space-y-6 max-w-4xl mx-auto">
@@ -113,65 +112,63 @@ export default function OwnProfileClient({ user }: Props) {
             </div>
 
             {/* Profile card */}
-            <div className="animate-fade-up delay-100 bg-dark-800 border border-white/5 rounded-2xl p-6">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div className="flex items-center gap-4">
-                        <div
-                            className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold shrink-0"
-                            style={{ background: "linear-gradient(135deg, rgba(43,143,191,0.3), rgba(232,23,122,0.3))" }}
-                        >
-                            {user.avatar ? (
-                                <img src={user.avatar} alt={user.name} className="w-full h-full rounded-2xl object-cover" />
-                            ) : (
-                                <span className="text-white">{user.name.charAt(0).toUpperCase()}</span>
-                            )}
-                        </div>
-                        <div>
-                            <h2 className="font-display text-2xl text-white tracking-wide">{user.name.toUpperCase()}</h2>
-                            <p className="text-sm text-neutral-500">{user.email}</p>
-                            <p className="text-xs text-neutral-600 mt-1">
-                                Membro desde {format(new Date(user.createdAt), "MMMM yyyy", { locale: pt })}
-                            </p>
-                            {user.stravaId && (
-                                <span className="inline-flex items-center gap-1.5 mt-2 text-xs bg-[#FC4C02]/10 border border-[#FC4C02]/20 text-[#FC4C02] px-2 py-0.5 rounded-full">
-                                    <Activity className="w-3 h-3" /> Strava ligado
-                                </span>
-                            )}
-                        </div>
-                    </div>
+            <div className="animate-fade-up delay-100 bg-dark-800 border border-white/5 rounded-2xl p-5">
+                {/* Botão settings no canto */}
+                <div className="flex justify-end mb-3">
                     <Link
                         href="/settings"
-                        className="flex items-center gap-2 bg-dark-700 border border-white/10 text-neutral-400 hover:text-white hover:border-white/20 text-sm px-4 py-2.5 rounded-xl transition-all"
+                        className="flex items-center justify-center w-8 h-8 bg-dark-700 border border-white/10 text-neutral-400 hover:text-white hover:border-white/20 rounded-xl transition-all"
                     >
-                        <Settings className="w-4 h-4" /> Editar perfil
+                        <Settings className="w-4 h-4" />
                     </Link>
                 </div>
 
-                {/* Quick info */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/5">
-                    <div className="text-center">
-                        <p className="text-xl font-bold text-white font-mono">{totalFriends}</p>
-                        <p className="text-xs text-neutral-500 flex items-center justify-center gap-1 mt-0.5">
-                            <UserCheck className="w-3 h-3" /> Amigos
-                        </p>
+                {/* Avatar + Info centrados */}
+                <div className="flex flex-col items-center text-center mb-5">
+                    <div
+                        className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold shrink-0 overflow-hidden mb-3"
+                        style={{ background: "linear-gradient(135deg, rgba(43,143,191,0.3), rgba(232,23,122,0.3))" }}
+                    >
+                        {user.avatar ? (
+                            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                        ) : (
+                            <span className="text-white">{user.name.charAt(0).toUpperCase()}</span>
+                        )}
                     </div>
-                    <div className="text-center">
-                        <p className="text-xl font-bold text-white font-mono">{user.teamMemberships.length}</p>
-                        <p className="text-xs text-neutral-500 flex items-center justify-center gap-1 mt-0.5">
-                            <Users className="w-3 h-3" /> Equipas
-                        </p>
+                    <h2 className="font-display text-xl text-white tracking-wide">{user.name.toUpperCase()}</h2>
+                    <p className="text-xs text-neutral-500 mt-0.5">{user.email}</p>
+                    <p className="text-xs text-neutral-600 mt-0.5">
+                        Membro desde {format(new Date(user.createdAt), "MMMM yyyy", { locale: pt })}
+                    </p>
+                    {user.stravaId && (
+                        <span className="inline-flex items-center gap-1.5 mt-2 text-xs bg-[#FC4C02]/10 border border-[#FC4C02]/20 text-[#FC4C02] px-2 py-0.5 rounded-full">
+                            <Activity className="w-3 h-3" /> Strava ligado
+                        </span>
+                    )}
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-1 gap-2 pt-4 border-t border-white/5">
+                    <div className="flex items-center gap-4 bg-dark-700 rounded-xl p-3">
+                        <UserCheck className="w-4 h-4 text-brand-400 shrink-0" />
+                        <div>
+                            <p className="text-sm font-bold text-white font-mono">{totalFriends}</p>
+                            <p className="text-xs text-neutral-500">Amigos</p>
+                        </div>
                     </div>
-                    <div className="text-center">
-                        <p className="text-xl font-bold text-white font-mono">{komStats?.totalKoms ?? "—"}</p>
-                        <p className="text-xs text-neutral-500 flex items-center justify-center gap-1 mt-0.5">
-                            <Trophy className="w-3 h-3" /> KOMs
-                        </p>
+                    <div className="flex items-center gap-4 bg-dark-700 rounded-xl p-3">
+                        <Users className="w-4 h-4 text-brand-400 shrink-0" />
+                        <div>
+                            <p className="text-sm font-bold text-white font-mono">{user.teamMemberships.length}</p>
+                            <p className="text-xs text-neutral-500">Equipas</p>
+                        </div>
                     </div>
-                    <div className="text-center">
-                        <p className="text-xl font-bold text-white font-mono">{komStats?.totalTop10 ?? "—"}</p>
-                        <p className="text-xs text-neutral-500 flex items-center justify-center gap-1 mt-0.5">
-                            <Medal className="w-3 h-3" /> Top 10
-                        </p>
+                    <div className="flex items-center gap-4 bg-dark-700 rounded-xl p-3">
+                        <Trophy className="w-4 h-4 text-yellow-400 shrink-0" />
+                        <div>
+                            <p className="text-sm font-bold text-white font-mono">{komStats?.totalKoms ?? "—"}</p>
+                            <p className="text-xs text-neutral-500">KOMs</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -207,28 +204,8 @@ export default function OwnProfileClient({ user }: Props) {
                 <div className="animate-fade-up delay-300 bg-dark-800 border border-white/5 rounded-2xl p-6">
                     <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                         <h2 className="font-semibold text-white flex items-center gap-2">
-                            <Trophy className="w-4 h-4 text-yellow-400" /> Segmentos Strava
+                            <Trophy className="w-4 h-4 text-yellow-400" /> KOMs Strava
                         </h2>
-                        <div className="flex items-center gap-1 bg-dark-700 border border-white/5 rounded-xl p-1">
-                            {[
-                                { value: "koms", label: "🥇 KOMs" },
-                                { value: "top10", label: "🏅 Top 10" },
-                                { value: "all", label: "Todos" },
-                            ].map(({ value, label }) => (
-                                <button
-                                    key={value}
-                                    onClick={() => setKomFilter(value as typeof komFilter)}
-                                    className={cn(
-                                        "px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                                        komFilter === value
-                                            ? "bg-brand-500/20 text-white border border-brand-500/30"
-                                            : "text-neutral-500 hover:text-neutral-200"
-                                    )}
-                                >
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
                     </div>
 
                     {loadingKoms ? (
@@ -239,35 +216,28 @@ export default function OwnProfileClient({ user }: Props) {
                         <div className="text-center py-10">
                             <Trophy className="w-8 h-8 text-neutral-700 mx-auto mb-2" />
                             <p className="text-neutral-500 text-sm">
-                                {komFilter === "koms" ? "Sem KOMs ainda — vai lá ganhar alguns! 🚴" :
-                                    komFilter === "top10" ? "Sem Top 10 ainda." : "Sem segmentos sincronizados."}
+                                Sem KOMs ainda ...
                             </p>
-                            <p className="text-neutral-600 text-xs mt-1">Faz Sync Strava no dashboard para atualizar.</p>
+                            <p className="text-neutral-600 text-xs mt-1">Faz Sync Strava para atualizar.</p>
                         </div>
                     ) : (
                         <div className="space-y-2 max-h-96 overflow-y-auto">
                             {efforts.map((effort) => (
                                 <a
-
                                     key={effort.id}
                                     href={`https://www.strava.com/segments/${effort.segmentId}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-3 p-3 bg-dark-700 rounded-xl border border-white/5 hover:border-white/10 transition-all group"
                                 >
-                                    <div className={cn(
-                                        "w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0",
-                                        effort.komRank === 1
-                                            ? "bg-yellow-500/20 text-yellow-400"
-                                            : "bg-brand-500/15 text-brand-400"
-                                    )}>
-                                        {effort.komRank === 1 ? "🥇" : `#${effort.prRank ?? "—"}`}
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 bg-yellow-500/20">
+                                        🥇
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-white truncate group-hover:text-brand-300 transition-colors">
                                             {effort.segmentName}
                                         </p>
-                                        <div className="flex items-center gap-3 text-xs text-neutral-500 mt-0.5">
+                                        <div className="flex items-center gap-2 text-xs text-neutral-500 mt-0.5 flex-wrap">
                                             {effort.city && (
                                                 <span className="flex items-center gap-1">
                                                     <MapPin className="w-3 h-3" /> {effort.city}
@@ -275,13 +245,9 @@ export default function OwnProfileClient({ user }: Props) {
                                             )}
                                             <span>{(effort.distanceM / 1000).toFixed(1)} km</span>
                                             {effort.avgGrade && <span>{effort.avgGrade.toFixed(1)}%</span>}
+                                            <span className="font-mono font-bold text-white">{formatDuration(effort.elapsedSeconds)}</span>
+                                            <span>{format(new Date(effort.startDate), "d MMM yyyy", { locale: pt })}</span>
                                         </div>
-                                    </div>
-                                    <div className="text-right shrink-0">
-                                        <p className="text-sm font-mono font-bold text-white">{formatDuration(effort.elapsedSeconds)}</p>
-                                        <p className="text-xs text-neutral-500">
-                                            {format(new Date(effort.startDate), "d MMM yyyy", { locale: pt })}
-                                        </p>
                                     </div>
                                 </a>
                             ))}

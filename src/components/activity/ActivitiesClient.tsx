@@ -145,16 +145,19 @@ export default function ActivitiesClient({ userId }: { userId: string }) {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-up">
-        <div>
-          <h1 className="font-display text-3xl text-white tracking-wide">ATIVIDADES</h1>
+
+      <div className="flex items-center justify-between gap-4 animate-fade-up">
+        <div className="min-w-0">
+          <h1 className="font-display text-3xl text-white tracking-wide truncate">ATIVIDADES</h1>
           <p className="text-neutral-500 text-sm mt-0.5">{total} atividades registadas</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all"
+          className="flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shrink-0"
         >
-          <Plus className="w-4 h-4" /> Nova Atividade
+          <Plus className="w-4 h-4" />
+          <span className="hidden sm:inline">Nova Atividade</span>
+          <span className="sm:hidden">Criar</span>
         </button>
       </div>
 

@@ -24,8 +24,12 @@ export default function ActivityMap({ polyline: encodedPolyline }: Props) {
         const container = mapRef.current as HTMLDivElement & { _leaflet_id?: number };
         delete container._leaflet_id;
 
+        let cancelled = false;
+
         const initMap = async () => {
             const L = (await import("leaflet")).default;
+
+            if (cancelled) return;
 
             const coords = polyline.decode(encodedPolyline) as [number, number][];
             if (coords.length === 0) return;
@@ -69,6 +73,7 @@ export default function ActivityMap({ polyline: encodedPolyline }: Props) {
         initMap();
 
         return () => {
+            cancelled = true;
             if (mapInstanceRef.current) {
                 (mapInstanceRef.current as { remove: () => void }).remove();
                 mapInstanceRef.current = null;

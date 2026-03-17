@@ -7,6 +7,10 @@ const schema = z.object({
   name: z.string().min(2).max(100).optional(),
   ftpWatts: z.number().int().min(0).nullable().optional(),
   weightKg: z.number().min(0).nullable().optional(),
+  defaultActivityType: z.enum([
+    "ride", "mountain_bike", "gravel_ride", "e_bike", "virtual_ride",
+    "run", "trail_run", "walk", "hike", "swim"
+  ]).optional(),
 });
 
 export async function GET() {
@@ -17,7 +21,8 @@ export async function GET() {
     where: { id: session.user.id },
     select: {
       id: true, name: true, email: true, avatar: true,
-      ftpWatts: true, weightKg: true, stravaId: true, dashboardWidgets: true,
+      ftpWatts: true, weightKg: true, stravaId: true,
+      dashboardWidgets: true, defaultActivityType: true,
     },
   });
 
@@ -35,7 +40,10 @@ export async function PATCH(req: NextRequest) {
   const user = await prisma.user.update({
     where: { id: session.user.id },
     data: parsed.data,
-    select: { id: true, name: true, email: true, ftpWatts: true, weightKg: true },
+    select: {
+      id: true, name: true, email: true,
+      ftpWatts: true, weightKg: true, defaultActivityType: true,
+    },
   });
 
   return NextResponse.json(user);

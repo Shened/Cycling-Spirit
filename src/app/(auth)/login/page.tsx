@@ -36,7 +36,7 @@ export default function LoginPage() {
           style={{ background: "linear-gradient(135deg, #2B8FBF, #E8177A)" }}>
           <Zap className="w-5 h-5 text-white" />
         </div>
-        <span className="font-display text-2xl tracking-wider text-white">CYCLING SPIRIT</span>
+        <span className="font-display text-2xl tracking-wider text-white">HYBRID NATION</span>
       </div>
 
       <div className="glass border border-white/8 rounded-2xl p-8">

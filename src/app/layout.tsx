@@ -3,7 +3,7 @@ import "./globals.css";
 import NavigationLoader from "@/components/layout/NavigationLoader";
 
 export const metadata: Metadata = {
-  title: "Cycling Spirit — Track. Train. Dominate.",
+  title: "Hybrid Nation — Track. Train. Dominate.",
   description: "A plataforma de ciclismo e treino para atletas sérios.",
   icons: {
     icon: "/favicon.svg",

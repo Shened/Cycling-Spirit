@@ -1,12 +1,19 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, User, Zap, Activity, Check, Unlink } from "lucide-react";
+import { Loader2, User, Zap, Activity, Check, Unlink, Bike, Mountain, PersonStanding, Footprints, Waves, Monitor } from "lucide-react";
+import { activityTypeLabel, activityTypeIcon, cn } from "@/lib/utils";
+
+const ACTIVITY_TYPES = [
+  "ride", "mountain_bike", "gravel_ride", "e_bike", "virtual_ride",
+  "run", "trail_run", "walk", "hike", "swim"
+];
 
 interface Props {
   user: {
     id: string; name: string; email: string; avatar?: string | null;
     ftpWatts?: number | null; weightKg?: number | null; stravaId?: string | null;
+    defaultActivityType?: string | null;
   };
 }
 
@@ -16,6 +23,7 @@ export default function SettingsClient({ user }: Props) {
     name: user.name,
     ftpWatts: user.ftpWatts?.toString() ?? "",
     weightKg: user.weightKg?.toString() ?? "",
+    defaultActivityType: user.defaultActivityType ?? "ride",
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -30,6 +38,7 @@ export default function SettingsClient({ user }: Props) {
         name: form.name,
         ftpWatts: form.ftpWatts ? parseInt(form.ftpWatts) : null,
         weightKg: form.weightKg ? parseFloat(form.weightKg) : null,
+        defaultActivityType: form.defaultActivityType,
       }),
     });
     setSaving(false);
@@ -113,6 +122,36 @@ export default function SettingsClient({ user }: Props) {
               />
             </div>
           </div>
+
+          {/* Default activity type */}
+          <div>
+            <label className="text-xs text-neutral-400 uppercase tracking-wider mb-1.5 block">
+              Desporto Principal
+            </label>
+            <p className="text-xs text-neutral-600 mb-3">Filtro aplicado por defeito no dashboard</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {ACTIVITY_TYPES.map((type) => {
+                const Icon = activityTypeIcon(type);
+                const active = form.defaultActivityType === type;
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setForm({ ...form, defaultActivityType: type })}
+                    className={cn(
+                      "flex items-center gap-2.5 p-3 rounded-xl border text-left transition-all",
+                      active
+                        ? "border-brand-500/40 bg-brand-500/10 text-white"
+                        : "border-white/8 bg-dark-700 text-neutral-500 hover:border-white/15 hover:text-neutral-300"
+                    )}
+                  >
+                    <Icon className={cn("w-4 h-4 shrink-0", active ? "text-brand-400" : "")} />
+                    <span className="text-xs font-medium truncate">{activityTypeLabel(type)}</span>
+                    {active && <Check className="w-3.5 h-3.5 ml-auto text-brand-400 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         <div className="mt-5 flex justify-end">
@@ -178,6 +217,6 @@ export default function SettingsClient({ user }: Props) {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }

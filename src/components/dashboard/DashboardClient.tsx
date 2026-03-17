@@ -9,7 +9,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid
 } from "recharts";
-import { formatDistance, formatDuration, activityTypeEmoji } from "@/lib/utils";
+import { formatDistance, formatDuration, activityTypeEmoji, cn } from "@/lib/utils";
 import type { DashboardStats, DashboardWidget } from "@/types";
 
 const ALL_WIDGETS: { key: DashboardWidget; label: string; icon: React.ElementType; unit: string; color: string }[] = [
@@ -24,6 +24,16 @@ const ALL_WIDGETS: { key: DashboardWidget; label: string; icon: React.ElementTyp
 ];
 
 type Period = "week" | "month" | "year";
+type ActivityTypeFilter = "" | "ride" | "run" | "walk" | "swim" | "hike";
+
+const ACTIVITY_FILTERS: { value: ActivityTypeFilter; label: string; emoji: string }[] = [
+  { value: "", label: "Todos", emoji: "🏅" },
+  { value: "ride", label: "Ciclismo", emoji: "🚴" },
+  { value: "run", label: "Corrida", emoji: "🏃" },
+  { value: "walk", label: "Caminhada", emoji: "🚶" },
+  { value: "swim", label: "Natação", emoji: "🏊" },
+  { value: "hike", label: "Trekking", emoji: "🥾" },
+];
 
 const PERIODS: { value: Period; label: string }[] = [
   { value: "week", label: "Semana" },
@@ -56,6 +66,7 @@ interface Props {
   user: {
     id: string; name: string; stravaId?: string | null;
     dashboardWidgets: string[];
+    defaultActivityType?: string | null;
     teamMemberships: TeamOption[];
   };
 }
@@ -66,6 +77,9 @@ export default function DashboardClient({ user }: Props) {
   const [syncing, setSyncing] = useState(false);
   const [editingWidgets, setEditingWidgets] = useState(false);
   const [period, setPeriod] = useState<Period>("month");
+  const [activityType, setActivityType] = useState<ActivityTypeFilter>(
+    (user.defaultActivityType as ActivityTypeFilter) ?? ""
+  );
   const [activeWidgets, setActiveWidgets] = useState<DashboardWidget[]>(
     (user.dashboardWidgets as DashboardWidget[]).length > 0
       ? (user.dashboardWidgets as DashboardWidget[])
@@ -87,12 +101,13 @@ export default function DashboardClient({ user }: Props) {
   const fetchStats = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ period });
+    if (activityType) params.set("type", activityType);
     if (selectedContext.type === "team") params.set("teamId", selectedContext.id);
     else if (selectedContext.id !== user.id) params.set("userId", selectedContext.id);
     const res = await fetch(`/api/dashboard?${params}`);
     if (res.ok) setStats(await res.json());
     setLoading(false);
-  }, [selectedContext, user.id, period]);
+  }, [selectedContext, user.id, period, activityType]);
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
@@ -192,6 +207,25 @@ export default function DashboardClient({ user }: Props) {
               <span className="absolute inset-0 rounded-lg border border-brand-500/30" />
             )}
             {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Activity type filter */}
+      <div className="flex items-center gap-1.5 animate-fade-up delay-150 flex-wrap">
+        {ACTIVITY_FILTERS.map(({ value, label, emoji }) => (
+          <button
+            key={value}
+            onClick={() => setActivityType(value)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all",
+              activityType === value
+                ? "bg-brand-500/15 border-brand-500/35 text-brand-300"
+                : "bg-dark-800 border-white/8 text-neutral-500 hover:border-white/15 hover:text-neutral-300"
+            )}
+          >
+            <span>{emoji}</span>
+            <span>{label}</span>
           </button>
         ))}
       </div>

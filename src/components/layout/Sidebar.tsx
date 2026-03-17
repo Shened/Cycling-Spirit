@@ -34,7 +34,7 @@ export default function Sidebar({ user }: Props) {
           <Zap className="w-4 h-4 text-white" />
         </div>
         <span className="hidden lg:block font-display text-lg tracking-widest text-white ml-3 whitespace-nowrap">
-          CYCLING SPIRIT
+          HYBRID NATION
         </span>
       </div>
 

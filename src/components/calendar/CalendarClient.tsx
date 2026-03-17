@@ -8,7 +8,7 @@ import {
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   addDays, addMonths, subMonths, isSameMonth, isSameDay, isToday,
-  parseISO
+  parseISO, isBefore, startOfDay
 } from "date-fns";
 import { pt } from "date-fns/locale";
 import type { PlannedActivity } from "@/types";
@@ -95,6 +95,9 @@ function EquipaDropdown({
 export default function CalendarClient({ userId, teams }: Props) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activities, setActivities] = useState<PlannedActivity[]>([]);
+  const [realActivities, setRealActivities] = useState<{
+    id: string; title: string; type: string; startedAt: string;
+  }[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -117,8 +120,17 @@ export default function CalendarClient({ userId, teams }: Props) {
     const to = format(endOfMonth(currentDate), "yyyy-MM-dd");
     const params = new URLSearchParams({ from, to });
     if (selectedTeam) params.set("teamId", selectedTeam);
-    const res = await fetch(`/api/calendar?${params}`);
-    if (res.ok) setActivities(await res.json());
+
+    const [calendarRes, activitiesRes] = await Promise.all([
+      fetch(`/api/calendar?${params}`),
+      fetch(`/api/activities?limit=100&from=${from}&to=${to}`),
+    ]);
+
+    if (calendarRes.ok) setActivities(await calendarRes.json());
+    if (activitiesRes.ok) {
+      const data = await activitiesRes.json();
+      setRealActivities(data.activities ?? []);
+    }
     setLoading(false);
   }, [currentDate, selectedTeam]);
 
@@ -127,7 +139,7 @@ export default function CalendarClient({ userId, teams }: Props) {
   const openForm = (date?: Date) => {
     const d = date ?? new Date();
     setSelectedDate(d);
-    setForm((f) => ({ ...f, scheduledFor: format(d, "yyyy-MM-dd'T'09:00"), teamId: selectedTeam ?? "" })); 
+    setForm((f) => ({ ...f, scheduledFor: format(d, "yyyy-MM-dd'T'09:00"), teamId: selectedTeam ?? "" }));
     setShowForm(true);
   };
 
@@ -264,11 +276,17 @@ export default function CalendarClient({ userId, teams }: Props) {
             const dayActs = getActivitiesForDay(day);
             const inMonth = isSameMonth(day, currentDate);
             const today = isToday(day);
+            const isPastDay = isBefore(startOfDay(day), startOfDay(new Date()));
             return (
               <div
                 key={i}
-                onClick={() => openForm(day)}
-                className={cn("min-h-[100px] p-2 border-b border-r border-white/5 cursor-pointer transition-colors hover:bg-white/3", !inMonth && "opacity-30", today && "bg-brand-500/5")}
+                onClick={() => !isPastDay && openForm(day)}
+                className={cn(
+                  "min-h-[100px] p-2 border-b border-r border-white/5 transition-colors",
+                  !inMonth && "opacity-30",
+                  today && "bg-brand-500/5",
+                  isPastDay ? "cursor-default opacity-60" : "cursor-pointer hover:bg-white/3"
+                )}
               >
                 <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-sm font-medium mb-1.5", today ? "bg-brand-500 text-white font-bold" : "text-neutral-400")}>
                   {format(day, "d")}
@@ -283,7 +301,23 @@ export default function CalendarClient({ userId, teams }: Props) {
                       {activityTypeEmoji(act.type)} {act.title}
                     </div>
                   ))}
+
                   {dayActs.length > 3 && <p className="text-xs text-neutral-500 pl-1">+{dayActs.length - 3} mais</p>}
+
+                  {/* Atividades reais */}
+                  {realActivities
+                    .filter((a) => isSameDay(parseISO(a.startedAt), day))
+                    .slice(0, 2)
+                    .map((act) => (
+                      <div
+                        key={act.id}
+                        className="text-xs px-1.5 py-0.5 rounded border truncate bg-[#FC4C02]/15 border-[#FC4C02]/30 text-[#FC4C02]"
+                      >
+                        {activityTypeEmoji(act.type)} {act.title}
+                      </div>
+                    ))
+                  }
+
                 </div>
               </div>
             );

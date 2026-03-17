@@ -25,10 +25,18 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get("page") ?? "1");
   const limit = parseInt(searchParams.get("limit") ?? "20");
   const type = searchParams.get("type");
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
 
   const where = {
     userId: session.user.id,
-    ...(type ? { type: type as "ride" | "run" | "walk" | "swim" | "hike" } : {}),
+    ...(type ? { type: type as "ride" | "mountain_bike" | "gravel_ride" | "e_bike" | "virtual_ride" | "run" | "trail_run" | "walk" | "hike" | "swim" } : {}),
+    ...(from || to ? {
+      startedAt: {
+        ...(from ? { gte: new Date(from) } : {}),
+        ...(to ? { lte: new Date(to) } : {}),
+      }
+    } : {}),
   };
 
   const [activities, total] = await Promise.all([

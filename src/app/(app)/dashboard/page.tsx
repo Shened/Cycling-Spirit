@@ -12,6 +12,7 @@ export default async function DashboardPage() {
       id: true, name: true, email: true, avatar: true,
       ftpWatts: true, weightKg: true, stravaId: true,
       dashboardWidgets: true,
+      defaultActivityType: true,
       teamMemberships: {
         select: {
           team: { select: { id: true, name: true } },

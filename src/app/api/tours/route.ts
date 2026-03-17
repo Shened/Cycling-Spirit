@@ -8,6 +8,7 @@ const createSchema = z.object({
     description: z.string().optional().nullable(),
     teamId: z.string().optional().nullable(),
     type: z.enum(["single", "multistage"]).default("multistage"),
+    activityType: z.enum(["ride", "run", "walk", "swim", "hike"]).default("ride"),
     startDate: z.string(),
     endDate: z.string(),
 });

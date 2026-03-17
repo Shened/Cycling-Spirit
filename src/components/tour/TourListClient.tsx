@@ -45,6 +45,7 @@ export default function TourListClient({ userId, teams, allUsers }: Props) {
     const [form, setForm] = useState({
         name: "", description: "", type: "multistage",
         teamId: "", startDate: "", endDate: "",
+        activityType: "ride",
     });
     const [inviteSearch, setInviteSearch] = useState("");
     const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
@@ -75,6 +76,7 @@ export default function TourListClient({ userId, teams, allUsers }: Props) {
                 name: form.name,
                 description: form.description || null,
                 type: form.type,
+                activityType: form.activityType,
                 teamId: form.teamId || null,
                 startDate: new Date(form.startDate).toISOString(),
                 endDate: new Date(form.endDate).toISOString(),
@@ -94,7 +96,7 @@ export default function TourListClient({ userId, teams, allUsers }: Props) {
             }
 
             setShowForm(false);
-            setForm({ name: "", description: "", type: "multistage", teamId: "", startDate: "", endDate: "" });
+            setForm({ name: "", description: "", type: "multistage", teamId: "", startDate: "", endDate: "", activityType: "ride" });
             setSelectedUsers([]);
             fetchTours();
         }
@@ -242,6 +244,34 @@ export default function TourListClient({ userId, teams, allUsers }: Props) {
                                         >
                                             <p className={cn("text-sm font-medium", form.type === t.value ? "text-brand-300" : "text-white")}>{t.label}</p>
                                             <p className="text-xs text-neutral-500 mt-0.5">{t.desc}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Tipo de atividade aceite */}
+                            <div>
+                                <label className="text-xs text-neutral-400 uppercase tracking-wider mb-1.5 block">Tipo de Atividade</label>
+                                <div className="grid grid-cols-5 gap-1.5">
+                                    {[
+                                        { value: "ride", emoji: "🚴", label: "Bici" },
+                                        { value: "run", emoji: "🏃", label: "Corr." },
+                                        { value: "walk", emoji: "🚶", label: "Camin." },
+                                        { value: "swim", emoji: "🏊", label: "Nat." },
+                                        { value: "hike", emoji: "🥾", label: "Trek." },
+                                    ].map((t) => (
+                                        <button
+                                            key={t.value}
+                                            onClick={() => setForm({ ...form, activityType: t.value })}
+                                            className={cn(
+                                                "flex flex-col items-center gap-1 py-2 rounded-xl border text-xs transition-all",
+                                                form.activityType === t.value
+                                                    ? "border-brand-500/50 bg-brand-500/10 text-brand-300"
+                                                    : "border-white/8 bg-dark-700 text-neutral-500 hover:border-white/15"
+                                            )}
+                                        >
+                                            <span>{t.emoji}</span>
+                                            <span>{t.label}</span>
                                         </button>
                                     ))}
                                 </div>

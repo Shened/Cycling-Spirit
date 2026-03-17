@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
   const targetUserId = searchParams.get("userId") ?? session.user.id;
   const teamId = searchParams.get("teamId");
   const period = searchParams.get("period") ?? "month";
+  const activityType = searchParams.get("type"); // novo filtro
 
   if (targetUserId !== session.user.id) {
     const shared = await prisma.teamMember.findFirst({
@@ -42,9 +43,14 @@ export async function GET(req: NextRequest) {
     periodEnd = endOfMonth(now);
   }
 
-  let activitiesQuery: { userId?: string; user?: { teamMemberships?: { some: { teamId: string } } } } = { userId: targetUserId };
+  // Filtro base
+  const baseFilter = {
+    ...(activityType ? { type: activityType as "ride" | "run" | "walk" | "swim" | "hike" } : {}),
+  };
+
+  let activitiesQuery: Record<string, unknown> = { userId: targetUserId, ...baseFilter };
   if (teamId) {
-    activitiesQuery = { user: { teamMemberships: { some: { teamId } } } };
+    activitiesQuery = { user: { teamMemberships: { some: { teamId } } }, ...baseFilter };
   }
 
   const periodActivities = await prisma.activity.findMany({

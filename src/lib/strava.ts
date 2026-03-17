@@ -222,3 +222,110 @@ export async function getSegmentEffortsForParticipants(
   // Ordena por hora de chegada (quem terminou o segment primeiro)
   return results.sort((a, b) => a.finishTime.getTime() - b.finishTime.getTime());
 }
+
+export async function syncStravaKoms(userId: string) {
+  const token = await getValidStravaToken(userId);
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { stravaId: true },
+  });
+
+  if (!user?.stravaId) throw new Error("Strava não ligado");
+
+  let page = 1;
+  const allEfforts = [];
+
+  while (true) {
+    const res = await fetch(
+      `${STRAVA_BASE}/athletes/${user.stravaId}/koms?per_page=50&page=${page}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (!res.ok) break;
+    const efforts = await res.json();
+    if (!Array.isArray(efforts) || efforts.length === 0) break;
+
+    allEfforts.push(...efforts);
+    if (efforts.length < 50) break;
+    page++;
+  }
+
+  // Guarda cada KOM/Top10 na BD
+  for (const effort of allEfforts) {
+    await prisma.stravaSegmentEffort.upsert({
+      where: { userId_segmentId: { userId, segmentId: String(effort.segment.id) } },
+      create: {
+        userId,
+        segmentId: String(effort.segment.id),
+        segmentName: effort.segment.name,
+        distanceM: effort.segment.distance,
+        elapsedSeconds: effort.elapsed_time,
+        startDate: new Date(effort.start_date),
+        komRank: effort.kom_rank ?? null,
+        prRank: effort.pr_rank ?? null,
+        avgGrade: effort.segment.average_grade ?? null,
+        city: effort.segment.city ?? null,
+        country: effort.segment.country ?? null,
+      },
+      update: {
+        segmentName: effort.segment.name,
+        elapsedSeconds: effort.elapsed_time,
+        startDate: new Date(effort.start_date),
+        komRank: effort.kom_rank ?? null,
+        prRank: effort.pr_rank ?? null,
+        avgGrade: effort.segment.average_grade ?? null,
+        city: effort.segment.city ?? null,
+        country: effort.segment.country ?? null,
+      },
+    });
+  }
+
+  return allEfforts.length;
+}
+
+export async function syncPersonalRecords(userId: string) {
+  const activities = await prisma.activity.findMany({
+    where: { userId },
+    select: {
+      id: true, distanceKm: true, elevationM: true,
+      avgSpeedKmh: true, avgWatts: true, durationSeconds: true,
+    },
+  });
+
+  if (activities.length === 0) return;
+
+  const longest = activities.reduce((a, b) => a.distanceKm > b.distanceKm ? a : b);
+  const highest = activities.reduce((a, b) => (a.elevationM ?? 0) > (b.elevationM ?? 0) ? a : b);
+  const fastest = activities.filter((a) => a.avgSpeedKmh).reduce((a, b) => (a.avgSpeedKmh ?? 0) > (b.avgSpeedKmh ?? 0) ? a : b, activities[0]);
+  const strongest = activities.filter((a) => a.avgWatts).reduce((a, b) => (a.avgWatts ?? 0) > (b.avgWatts ?? 0) ? a : b, activities[0]);
+  const longest_duration = activities.reduce((a, b) => a.durationSeconds > b.durationSeconds ? a : b);
+
+  await prisma.stravaPersonalRecord.upsert({
+    where: { userId },
+    create: {
+      userId,
+      longestDistanceKm: longest.distanceKm,
+      longestActivityId: longest.id,
+      highestElevationM: highest.elevationM ?? 0,
+      highestElevationId: highest.id,
+      fastestSpeedKmh: fastest?.avgSpeedKmh ?? 0,
+      fastestSpeedId: fastest?.id ?? null,
+      highestWatts: strongest?.avgWatts ?? 0,
+      highestWattsId: strongest?.id ?? null,
+      longestDurationSecs: longest_duration.durationSeconds,
+      longestDurationId: longest_duration.id,
+    },
+    update: {
+      longestDistanceKm: longest.distanceKm,
+      longestActivityId: longest.id,
+      highestElevationM: highest.elevationM ?? 0,
+      highestElevationId: highest.id,
+      fastestSpeedKmh: fastest?.avgSpeedKmh ?? 0,
+      fastestSpeedId: fastest?.id ?? null,
+      highestWatts: strongest?.avgWatts ?? 0,
+      highestWattsId: strongest?.id ?? null,
+      longestDurationSecs: longest_duration.durationSeconds,
+      longestDurationId: longest_duration.id,
+    },
+  });
+}

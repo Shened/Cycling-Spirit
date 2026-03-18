@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { parseGPX } from "@/lib/gpx";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 
 // Leaflet só funciona no browser
 const ActivityMap = dynamic(() => import("./ActivityMap"), { ssr: false });
@@ -35,6 +36,8 @@ export default function ActivitiesClient({ userId }: { userId: string }) {
   const [gpxPolyline, setGpxPolyline] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const router = useRouter();
 
   const [form, setForm] = useState({
     title: "", type: "ride", distanceKm: "", durationSeconds: "",
@@ -197,7 +200,7 @@ export default function ActivitiesClient({ userId }: { userId: string }) {
             {activities.map((act, i) => (
               <div
                 key={act.id}
-                onClick={() => setSelectedActivity(act)}
+                onClick={() => router.push(`/activities/${act.id}`)}
                 className="flex items-center gap-4 px-5 py-4 hover:bg-white/3 transition-colors group cursor-pointer"
                 style={{ animationDelay: `${i * 30}ms` }}
               >
@@ -286,6 +289,13 @@ export default function ActivitiesClient({ userId }: { userId: string }) {
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            <a
+              href={`/activities/${selectedActivity.id}`}
+              className="inline-flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 transition-colors"
+            >
+              Ver página completa →
+            </a>
 
             {/* Map */}
             {selectedActivity.polyline && (

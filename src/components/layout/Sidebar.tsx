@@ -3,15 +3,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Calendar, Users, Activity,
-  Trophy, Zap, Settings, LogOut, UserCircle, Flag
+  Trophy, Zap, Settings, LogOut, UserCircle, Flag, Rss, TrendingUp
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/calendar", icon: Calendar, label: "Calendário" },
+  { href: "/feed", icon: Rss, label: "Feed" },
   { href: "/activities", icon: Activity, label: "Atividades" },
+  { href: "/training-zones", icon: TrendingUp, label: "Zonas de Treino" },
+  { href: "/calendar", icon: Calendar, label: "Calendário" },
   { href: "/teams", icon: Users, label: "Equipas" },
   { href: "/competitions", icon: Trophy, label: "Competições" },
   { href: "/tour", icon: Flag, label: "Tour" },

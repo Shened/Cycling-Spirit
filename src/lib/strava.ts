@@ -329,3 +329,67 @@ export async function syncPersonalRecords(userId: string) {
     },
   });
 }
+
+// Adicionar ao ficheiro: src/lib/strava.ts
+// Cola esta função no final do ficheiro, antes do último export
+
+export async function syncSingleStravaActivity(userId: string, stravaActivityId: number) {
+  const token = await getValidStravaToken(userId);
+
+  const detail = await fetchActivityDetail(token, stravaActivityId);
+  if (!detail) throw new Error("Atividade não encontrada no Strava");
+
+  const type = mapStravaType(detail.type);
+  const stravaId = String(detail.id);
+
+  const calories = detail.calories || null;
+  const polyline =
+    detail.map?.polyline || detail.map?.summary_polyline || null;
+
+  await prisma.activity.upsert({
+    where: { stravaId },
+    create: {
+      userId,
+      stravaId,
+      title: detail.name,
+      type,
+      distanceKm: (detail.distance || 0) / 1000,
+      durationSeconds: detail.moving_time || 0,
+      elevationM: detail.total_elevation_gain
+        ? Math.round(detail.total_elevation_gain)
+        : null,
+      avgWatts: detail.average_watts ? Math.round(detail.average_watts) : null,
+      avgHeartRate: detail.average_heartrate || null,
+      avgSpeedKmh: detail.average_speed ? detail.average_speed * 3.6 : null,
+      calories,
+      polyline,
+      startedAt: new Date(detail.start_date),
+      isManual: false,
+    },
+    update: {
+      title: detail.name,
+      distanceKm: (detail.distance || 0) / 1000,
+      durationSeconds: detail.moving_time || 0,
+      elevationM: detail.total_elevation_gain
+        ? Math.round(detail.total_elevation_gain)
+        : null,
+      avgWatts: detail.average_watts ? Math.round(detail.average_watts) : null,
+      avgHeartRate: detail.average_heartrate || null,
+      avgSpeedKmh: detail.average_speed ? detail.average_speed * 3.6 : null,
+      calories,
+      polyline,
+    },
+  });
+
+  // Atualiza personal records após inserir
+  await syncPersonalRecords(userId);
+
+  return detail.name as string;
+}
+
+export async function deleteStravaActivity(userId: string, stravaActivityId: number) {
+  const stravaId = String(stravaActivityId);
+  await prisma.activity.deleteMany({
+    where: { userId, stravaId, isManual: false },
+  });
+}

@@ -27,6 +27,8 @@ model User {
   updatedAt            DateTime     @updatedAt
   isPublic             Boolean      @default(true)
   lastSyncAt           DateTime?
+  hrZones              Json? // [{zone:1, min:100, max:130}, ...]
+  ftpZones             Json? // para o futuro, se quiseres personalizar potência também
 
   // Relations
   activities          Activity[]

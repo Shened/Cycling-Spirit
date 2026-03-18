@@ -1,11 +1,15 @@
-import { auth } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default auth((req) => {
-  const isLoggedIn = !!req.auth;
-  const isAuthRoute = req.nextUrl.pathname.startsWith("/login") || req.nextUrl.pathname.startsWith("/register");
-  const isApiRoute = req.nextUrl.pathname.startsWith("/api");
-  const isInviteRoute = req.nextUrl.pathname.startsWith("/invite");
+export async function middleware(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const isLoggedIn = !!token;
+
+  const { pathname } = req.nextUrl;
+
+  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/register");
+  const isApiRoute = pathname.startsWith("/api");
+  const isInviteRoute = pathname.startsWith("/invite");
 
   if (isApiRoute || isInviteRoute) return NextResponse.next();
 
@@ -18,7 +22,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],

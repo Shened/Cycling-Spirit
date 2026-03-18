@@ -1,4 +1,5 @@
 // src/app/api/strava/webhook/route.ts
+// Substitui o ficheiro existente
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -7,10 +8,9 @@ import {
     deleteStravaActivity,
     syncPersonalRecords,
 } from "@/lib/strava";
+import { syncActiveCompetitionsForUser } from "@/lib/competitions";
 
 // ─── GET — Validação do webhook pelo Strava ───────────────────────────────────
-// O Strava chama este endpoint quando registas o webhook no painel de API.
-// Responde com hub.challenge para confirmar a subscrição.
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
@@ -30,7 +30,6 @@ export async function GET(req: NextRequest) {
 }
 
 // ─── POST — Eventos do Strava ─────────────────────────────────────────────────
-// O Strava chama este endpoint quando um atleta cria/atualiza/elimina atividades.
 export async function POST(req: NextRequest) {
     let body: {
         object_type: string;
@@ -53,14 +52,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ status: "ignored" });
     }
 
-    // Encontra o user pelo stravaId (owner_id é o Strava athlete ID)
+    // Encontra o user pelo stravaId
     const user = await prisma.user.findUnique({
         where: { stravaId: String(owner_id) },
         select: { id: true },
     });
 
     if (!user) {
-        // Atleta não registado na plataforma — ignora silenciosamente
         return NextResponse.json({ status: "user_not_found" });
     }
 
@@ -68,16 +66,27 @@ export async function POST(req: NextRequest) {
 
     try {
         if (aspect_type === "create" || aspect_type === "update") {
-            // Sync da atividade específica
+            // 1. Sync da atividade
             const title = await syncSingleStravaActivity(user.id, object_id);
             console.log(`[webhook] Synced: "${title}"`);
-            return NextResponse.json({ status: "synced", title });
+
+            // 2. Atualiza competições ativas automaticamente
+            const competitionsSynced = await syncActiveCompetitionsForUser(user.id);
+            console.log(`[webhook] Updated ${competitionsSynced} active competition(s)`);
+
+            return NextResponse.json({ status: "synced", title, competitionsSynced });
         }
 
         if (aspect_type === "delete") {
+            // 1. Remove a atividade
             await deleteStravaActivity(user.id, object_id);
             console.log(`[webhook] Deleted activity ${object_id}`);
-            return NextResponse.json({ status: "deleted" });
+
+            // 2. Recalcula competições (valor pode ter descido)
+            const competitionsSynced = await syncActiveCompetitionsForUser(user.id);
+            console.log(`[webhook] Recalculated ${competitionsSynced} active competition(s)`);
+
+            return NextResponse.json({ status: "deleted", competitionsSynced });
         }
 
         return NextResponse.json({ status: "ignored" });

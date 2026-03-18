@@ -9,8 +9,9 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid
 } from "recharts";
-import { formatDistance, formatDuration, activityTypeEmoji, cn } from "@/lib/utils";
+import { formatDistance, formatDuration, activityTypeEmoji, cn, metricLabel } from "@/lib/utils";
 import type { DashboardStats, DashboardWidget } from "@/types";
+import GoalsWidget from "@/components/goals/GoalsWidget";
 
 const ALL_WIDGETS: { key: DashboardWidget; label: string; icon: React.ElementType; unit: string; color: string }[] = [
   { key: "distance", label: "Distância", icon: Bike, unit: "km", color: "#2B8FBF" },
@@ -355,11 +356,16 @@ export default function DashboardClient({ user }: Props) {
                       <p className="text-xs text-neutral-500 mt-0.5">
                         {daysLeft > 0 ? `${daysLeft} dias restantes` : "Termina hoje"}
                       </p>
+                      <p className="text-xs text-neutral-500 mt-0.5">{metricLabel(comp.metric)}</p>
                     </div>
                     {myEntry && myRank > 0 && (
                       <div className="text-right shrink-0">
                         <p className="text-lg font-display text-gradient">{myRank}º</p>
-                        <p className="text-xs text-neutral-500 font-mono">{myEntry.value.toFixed(1)}</p>
+                        <p className="text-xs text-neutral-500 font-mono">{myEntry.value.toFixed(1)}{" "}
+                          <span className="text-neutral-600">
+                            {{ distance_km: "km", elevation_m: "m", avg_speed: "km/h", duration_hours: "h", activities_count: "" }[comp.metric] ?? ""}
+                          </span>
+                        </p>
                       </div>
                     )}
                   </div>
@@ -376,7 +382,10 @@ export default function DashboardClient({ user }: Props) {
                           {idx + 1}
                         </span>
                         <span className="text-xs text-neutral-300 flex-1 truncate">{entry.user.name}</span>
-                        <span className="text-xs font-mono text-brand-400">{entry.value.toFixed(1)}</span>
+                        <span className="text-xs font-mono text-brand-400">{entry.value.toFixed(1)}{" "}
+                          <span className="text-neutral-600">
+                            {{ distance_km: "km", elevation_m: "m", avg_speed: "km/h", duration_hours: "h", activities_count: "" }[comp.metric] ?? ""}
+                          </span></span>
                       </div>
                     ))}
                   </div>
@@ -387,6 +396,8 @@ export default function DashboardClient({ user }: Props) {
         </div>
       )}
 
+      <GoalsWidget />
+      
       {/* Recent activities */}
       {
         stats?.recentActivities && stats.recentActivities.length > 0 && (

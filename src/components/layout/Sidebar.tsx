@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Calendar, Users, Activity,
-  Trophy, Zap, Settings, LogOut, UserCircle, Flag, Rss, TrendingUp
+  Trophy, Zap, Settings, LogOut, UserCircle, Flag, Rss, TrendingUp, Target
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ const navItems = [
   { href: "/feed", icon: Rss, label: "Feed" },
   { href: "/activities", icon: Activity, label: "Atividades" },
   { href: "/training-zones", icon: TrendingUp, label: "Zonas de Treino" },
+  { href: "/goals", icon: Target, label: "Objetivos" },
   { href: "/calendar", icon: Calendar, label: "Calendário" },
   { href: "/teams", icon: Users, label: "Equipas" },
   { href: "/competitions", icon: Trophy, label: "Competições" },

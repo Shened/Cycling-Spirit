@@ -70,24 +70,43 @@ export default function CompetitionsClient({ userId, teams, allUsers = [] }: Pro
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null);
 
 
+  // src/components/competition/CompetitionsClient.tsx
+  // Substitui o fetchCompetitions existente
+
   const fetchCompetitions = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/competitions");
     if (res.ok) {
       const data = await res.json();
-      setCompetitions(data);
 
-      // Sync automático das competições ativas
-      for (const comp of data) {
+      // Sync das competições ativas ANTES de atualizar o estado
+      const activeComps = data.filter((comp: Competition) => {
         const now = new Date();
-        if (
+        return (
           comp.status === "approved" &&
           new Date(comp.startDate) <= now &&
           new Date(comp.endDate) >= now
-        ) {
-          fetch(`/api/competitions/${comp.id}/sync`, { method: "POST" });
+        );
+      });
+
+      if (activeComps.length > 0) {
+        // Aguarda todos os syncs terminarem
+        await Promise.all(
+          activeComps.map((comp: Competition) =>
+            fetch(`/api/competitions/${comp.id}/sync`, { method: "POST" })
+          )
+        );
+
+        // Rebusca após sync para ter os valores atualizados
+        const res2 = await fetch("/api/competitions");
+        if (res2.ok) {
+          setCompetitions(await res2.json());
+          setLoading(false);
+          return;
         }
       }
+
+      setCompetitions(data);
     }
     setLoading(false);
   }, []);

@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 type Metric = "distance_km" | "duration_hours" | "activities_count";
 type Period = "monthly" | "annual";
-type ActivityGroup = "cycling" | "running" | "walking" | "swimming" | null;
+type ActivityGroup = "all" | "cycling" | "running" | "walking" | "swimming";
 
 interface Goal {
     id: string;
@@ -48,6 +48,7 @@ const METRIC_CONFIG: Record<Metric, { label: string; icon: React.ElementType; un
 };
 
 const ACTIVITY_GROUPS: Record<string, { label: string; emoji: string; color: string }> = {
+    all: { label: "Todos", emoji: "🏅", color: "#8b8b8b" },
     cycling: { label: "Ciclismo", emoji: "🚴", color: "#2B8FBF" },
     running: { label: "Corrida", emoji: "🏃", color: "#f97316" },
     walking: { label: "Caminhada", emoji: "🚶", color: "#22c55e" },
@@ -63,14 +64,11 @@ const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth() + 1;
 
 function GroupBadge({ group }: { group: ActivityGroup }) {
-    if (!group) return null;
+    if (!group || group === "all") return null;
     const config = ACTIVITY_GROUPS[group];
     if (!config) return null;
     return (
-        <span
-            className="text-xs px-1.5 py-0.5 rounded font-medium inline-flex items-center gap-1"
-            style={{ background: `${config.color}18`, color: config.color }}
-        >
+        <span className="text-xs px-1.5 py-0.5 rounded font-medium inline-flex items-center gap-1" style={{ background: `${config.color}18`, color: config.color }}>
             {config.emoji} {config.label}
         </span>
     );
@@ -93,10 +91,7 @@ function GoalCard({ goal, onDelete }: { goal: Goal; onDelete: (id: string) => vo
     const remaining = Math.max(goal.target - goal.current, 0);
 
     return (
-        <div className={cn(
-            "bg-dark-800 border rounded-2xl p-5 transition-all",
-            isCompleted ? "border-green-500/30" : goal.isActive ? "border-white/8" : "border-white/5 opacity-70"
-        )}>
+        <div className={cn("bg-dark-800 border rounded-2xl p-5 transition-all", isCompleted ? "border-green-500/30" : goal.isActive ? "border-white/8" : "border-white/5 opacity-70")}>
             <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${config.color}18` }}>
@@ -175,7 +170,7 @@ function SuggestionCard({ suggestion, onAccept, onDismiss, accepting }: {
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 <span className="text-xs text-neutral-500">{periodLabel}</span>
-                                {groupConfig && (
+                                {groupConfig && groupConfig.label !== "Todos" && (
                                     <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: `${groupConfig.color}18`, color: groupConfig.color }}>
                                         {groupConfig.emoji} {groupConfig.label}
                                     </span>
@@ -189,22 +184,13 @@ function SuggestionCard({ suggestion, onAccept, onDismiss, accepting }: {
                         </p>
                     </div>
                 </div>
-
                 <p className="text-xs text-neutral-500 mb-3 flex items-center gap-1.5">
                     <Sparkles className="w-3 h-3 text-brand-400 shrink-0" />
                     {suggestion.reason}
                 </p>
-
                 <div className="flex gap-2">
-                    <button onClick={() => onDismiss(suggestion)} className="flex-1 py-2 rounded-lg bg-dark-700 border border-white/8 text-neutral-400 hover:text-white text-xs transition-all">
-                        Ignorar
-                    </button>
-                    <button
-                        onClick={() => onAccept(suggestion)}
-                        disabled={accepting}
-                        className="flex-1 py-2 rounded-lg text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
-                        style={{ background: "linear-gradient(135deg, #2B8FBF, #1A5A80)" }}
-                    >
+                    <button onClick={() => onDismiss(suggestion)} className="flex-1 py-2 rounded-lg bg-dark-700 border border-white/8 text-neutral-400 hover:text-white text-xs transition-all">Ignorar</button>
+                    <button onClick={() => onAccept(suggestion)} disabled={accepting} className="flex-1 py-2 rounded-lg text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50" style={{ background: "linear-gradient(135deg, #2B8FBF, #1A5A80)" }}>
                         {accepting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                         Aceitar
                     </button>
@@ -218,6 +204,7 @@ export default function GoalsClient({ userId }: { userId: string }) {
     const [goals, setGoals] = useState<Goal[]>([]);
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [dismissedSuggestions, setDismissedSuggestions] = useState<string[]>([]);
+    const [dominantGroup, setDominantGroup] = useState<ActivityGroup>("all");
     const [loading, setLoading] = useState(true);
     const [loadingSuggestions, setLoadingSuggestions] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -232,7 +219,7 @@ export default function GoalsClient({ userId }: { userId: string }) {
         target: "",
         year: currentYear,
         month: currentMonth,
-        activityGroup: null as ActivityGroup,
+        activityGroup: "all" as ActivityGroup,
     });
 
     const fetchGoals = useCallback(async () => {
@@ -248,6 +235,11 @@ export default function GoalsClient({ userId }: { userId: string }) {
         if (res.ok) {
             const data = await res.json();
             setSuggestions(data.suggestions ?? []);
+            // Pré-seleciona o desporto dominante como default do form
+            if (data.dominantGroup && data.dominantGroup !== "all") {
+                setDominantGroup(data.dominantGroup as ActivityGroup);
+                setForm((prev) => ({ ...prev, activityGroup: data.dominantGroup as ActivityGroup }));
+            }
         }
         setLoadingSuggestions(false);
     }, []);
@@ -256,10 +248,7 @@ export default function GoalsClient({ userId }: { userId: string }) {
     useEffect(() => { fetchSuggestions(); }, [fetchSuggestions]);
 
     const suggestionKey = (s: Suggestion) => `${s.metric}-${s.period}-${s.year}-${s.month}-${s.activityGroup}`;
-
     const visibleSuggestions = suggestions.filter((s) => !dismissedSuggestions.includes(suggestionKey(s)));
-
-    // Desportos únicos nas sugestões (para tabs)
     const suggestionGroups = [...new Set(visibleSuggestions.map((s) => s.activityGroup))];
 
     const handleAcceptSuggestion = async (suggestion: Suggestion) => {
@@ -299,7 +288,7 @@ export default function GoalsClient({ userId }: { userId: string }) {
         setSaving(false);
         if (res.ok) {
             setShowForm(false);
-            setForm({ metric: "distance_km", period: "monthly", target: "", year: currentYear, month: currentMonth, activityGroup: null });
+            setForm({ metric: "distance_km", period: "monthly", target: "", year: currentYear, month: currentMonth, activityGroup: dominantGroup });
             fetchGoals();
             fetchSuggestions();
         }
@@ -312,16 +301,10 @@ export default function GoalsClient({ userId }: { userId: string }) {
         fetchSuggestions();
     };
 
-    // Filtra goals por grupo
-    const filteredGoals = filterGroup === "all"
-        ? goals
-        : goals.filter((g) => (g.activityGroup ?? "all") === filterGroup);
-
+    const filteredGoals = filterGroup === "all" ? goals : goals.filter((g) => g.activityGroup === filterGroup);
     const activeGoals = filteredGoals.filter((g) => g.isActive);
     const pastMonthlyGoals = filteredGoals.filter((g) => g.period === "monthly" && !g.isActive);
     const annualGoals = filteredGoals.filter((g) => g.period === "annual");
-
-    // Grupos únicos nos goals
     const goalGroups = [...new Set(goals.map((g) => g.activityGroup ?? "all"))];
 
     return (
@@ -330,18 +313,19 @@ export default function GoalsClient({ userId }: { userId: string }) {
             <div className="flex items-center justify-between animate-fade-up">
                 <div>
                     <h1 className="font-display text-3xl text-white tracking-wide">OBJETIVOS</h1>
-                    <p className="text-neutral-500 text-sm mt-0.5">Metas mensais e anuais por desporto</p>
+                    <p className="text-neutral-500 text-sm mt-0.5">
+                        Metas mensais e anuais por desporto
+                        {dominantGroup !== "all" && (
+                            <span className="ml-1.5 text-xs">
+                                · Desporto principal: <span style={{ color: ACTIVITY_GROUPS[dominantGroup]?.color }}>{ACTIVITY_GROUPS[dominantGroup]?.emoji} {ACTIVITY_GROUPS[dominantGroup]?.label}</span>
+                            </span>
+                        )}
+                    </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="relative">
-                        <select
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                            className="appearance-none bg-dark-800 border border-white/10 text-white text-xs rounded-xl pl-3 pr-8 py-2.5 focus:outline-none focus:border-brand-500 cursor-pointer"
-                        >
-                            {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
-                                <option key={y} value={y}>{y}</option>
-                            ))}
+                        <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="appearance-none bg-dark-800 border border-white/10 text-white text-xs rounded-xl pl-3 pr-8 py-2.5 focus:outline-none focus:border-brand-500 cursor-pointer">
+                            {[currentYear - 1, currentYear, currentYear + 1].map((y) => <option key={y} value={y}>{y}</option>)}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-500 pointer-events-none" />
                     </div>
@@ -356,42 +340,21 @@ export default function GoalsClient({ userId }: { userId: string }) {
                 </div>
             </div>
 
-            {/* Sugestões inteligentes por desporto */}
+            {/* Sugestões */}
             {!loadingSuggestions && visibleSuggestions.length > 0 && (
                 <div className="animate-fade-up delay-100">
                     <div className="flex items-center gap-2 mb-3">
                         <Sparkles className="w-4 h-4 text-brand-400" />
                         <p className="text-sm font-semibold text-white">Sugestões para ti</p>
+                        {suggestionGroups.length > 1 && (
+                            <span className="text-xs text-neutral-500">{suggestionGroups.length} desportos detetados</span>
+                        )}
                     </div>
-
-                    {/* Tabs por desporto */}
-                    {suggestionGroups.length > 1 && (
-                        <div className="flex items-center gap-1.5 mb-3 overflow-x-auto scrollbar-none">
-                            {suggestionGroups.map((group) => {
-                                const cfg = ACTIVITY_GROUPS[group];
-                                return (
-                                    <button
-                                        key={group}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap bg-dark-800 border border-white/8 text-neutral-400 hover:text-white hover:border-white/15 transition-all"
-                                    >
-                                        {cfg?.emoji} {cfg?.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {visibleSuggestions.map((suggestion) => {
                             const key = suggestionKey(suggestion);
                             return (
-                                <SuggestionCard
-                                    key={key}
-                                    suggestion={suggestion}
-                                    onAccept={handleAcceptSuggestion}
-                                    onDismiss={handleDismissSuggestion}
-                                    accepting={acceptingId === key}
-                                />
+                                <SuggestionCard key={key} suggestion={suggestion} onAccept={handleAcceptSuggestion} onDismiss={handleDismissSuggestion} accepting={acceptingId === key} />
                             );
                         })}
                     </div>
@@ -401,21 +364,11 @@ export default function GoalsClient({ userId }: { userId: string }) {
             {/* Filtro por desporto */}
             {!loading && goals.length > 0 && goalGroups.length > 1 && (
                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none animate-fade-up">
-                    <button
-                        onClick={() => setFilterGroup("all")}
-                        className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0", filterGroup === "all" ? "bg-brand-500/15 border border-brand-500/30 text-brand-300" : "bg-dark-800 border border-white/8 text-neutral-500 hover:text-white")}
-                    >
-                        Todos
-                    </button>
-                    {goalGroups.filter((g) => g !== "all").map((group) => {
+                    {["all", ...goalGroups.filter((g) => g !== "all")].map((group) => {
                         const cfg = ACTIVITY_GROUPS[group as string];
                         if (!cfg) return null;
                         return (
-                            <button
-                                key={group}
-                                onClick={() => setFilterGroup(group as string)}
-                                className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0", filterGroup === group ? "bg-brand-500/15 border border-brand-500/30 text-brand-300" : "bg-dark-800 border border-white/8 text-neutral-500 hover:text-white")}
-                            >
+                            <button key={group} onClick={() => setFilterGroup(group as string)} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 border", filterGroup === group ? "bg-brand-500/15 border-brand-500/30 text-brand-300" : "bg-dark-800 border-white/8 text-neutral-500 hover:text-white")}>
                                 {cfg.emoji} {cfg.label}
                             </button>
                         );
@@ -485,21 +438,31 @@ export default function GoalsClient({ userId }: { userId: string }) {
                         <div className="p-5 space-y-4">
                             {/* Desporto */}
                             <div>
-                                <label className="text-xs text-neutral-400 uppercase tracking-wider mb-2 block">Desporto</label>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-xs text-neutral-400 uppercase tracking-wider">Desporto</label>
+                                    {dominantGroup !== "all" && (
+                                        <span className="text-xs text-neutral-500 flex items-center gap-1">
+                                            <Sparkles className="w-3 h-3 text-brand-400" />
+                                            Pré-selecionado com base no teu historial
+                                        </span>
+                                    )}
+                                </div>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        onClick={() => setForm({ ...form, activityGroup: null })}
-                                        className={cn("py-2.5 rounded-xl border text-sm font-medium transition-all", !form.activityGroup ? "border-brand-500/40 bg-brand-500/10 text-white" : "border-white/8 bg-dark-700 text-neutral-400 hover:border-white/15 hover:text-white")}
-                                    >
-                                        🏅 Todos
-                                    </button>
                                     {Object.entries(ACTIVITY_GROUPS).map(([key, cfg]) => (
                                         <button
                                             key={key}
                                             onClick={() => setForm({ ...form, activityGroup: key as ActivityGroup })}
-                                            className={cn("py-2.5 rounded-xl border text-sm font-medium transition-all", form.activityGroup === key ? "border-brand-500/40 bg-brand-500/10 text-white" : "border-white/8 bg-dark-700 text-neutral-400 hover:border-white/15 hover:text-white")}
+                                            className={cn(
+                                                "py-2.5 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-1.5",
+                                                form.activityGroup === key
+                                                    ? "border-brand-500/40 bg-brand-500/10 text-white"
+                                                    : "border-white/8 bg-dark-700 text-neutral-400 hover:border-white/15 hover:text-white"
+                                            )}
                                         >
                                             {cfg.emoji} {cfg.label}
+                                            {key === dominantGroup && key !== "all" && (
+                                                <span className="text-xs text-brand-400">★</span>
+                                            )}
                                         </button>
                                     ))}
                                 </div>

@@ -48,6 +48,39 @@ const PERIOD_LABELS: Record<Period, string> = {
   year: "este ano",
 };
 
+function YoYBadge({ change }: { change: number | null }) {
+  if (change === null) return null;
+
+  const isPositive = change > 0;
+  const isNeutral = change === 0;
+
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded-lg",
+      isNeutral
+        ? "bg-neutral-500/15 text-neutral-400"
+        : isPositive
+          ? "bg-green-500/15 text-green-400"
+          : "bg-red-500/15 text-red-400"
+    )}>
+      {isNeutral ? "=" : isPositive ? "↑" : "↓"}
+      {isNeutral ? "igual" : `${Math.abs(change)}%`}
+    </span>
+  );
+}
+
+function getYoYChange(stats: DashboardStats, key: DashboardWidget): number | null {
+  if (!stats.yoy?.hasPrevData) return null;
+  switch (key) {
+    case "distance": return stats.yoy.km;
+    case "duration": return stats.yoy.hours;
+    case "activities": return stats.yoy.activities;
+    case "elevation": return stats.yoy.elevation;
+    case "calories": return stats.yoy.calories;
+    default: return null;
+  }
+}
+
 function getStatValue(stats: DashboardStats, key: DashboardWidget): string {
   switch (key) {
     case "distance": return formatDistance(stats.totalKm);
@@ -291,10 +324,14 @@ export default function DashboardClient({ user }: Props) {
                     </div>
                     <TrendingUp className="w-3.5 h-3.5 text-neutral-700 group-hover:text-neutral-500 transition-colors" />
                   </div>
-                  <p className="text-xl font-bold text-white font-mono tracking-tight">
+                  <p className="text-2xl font-display font-bold text-white mt-1">
                     {getStatValue(stats, key)}
                   </p>
-                  <p className="text-xs text-neutral-500 mt-0.5">{w.label}</p>
+                  {selectedContext.type === "user" && (
+                    <div className="mt-1.5">
+                      <YoYBadge change={getYoYChange(stats, key)} />
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -397,7 +434,7 @@ export default function DashboardClient({ user }: Props) {
       )}
 
       <GoalsWidget />
-      
+
       {/* Recent activities */}
       {
         stats?.recentActivities && stats.recentActivities.length > 0 && (

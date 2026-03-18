@@ -117,4 +117,17 @@ export interface DashboardStats {
     endDate: string;
     entries: { userId: string; value: number; user: { id: string; name: string } }[];
   }[];
+  yoy: {
+    km: number | null;
+    hours: number | null;
+    activities: number | null;
+    elevation: number | null;
+    calories: number | null;
+    prevKm: number;
+    prevHours: number;
+    prevActivitiesCount: number;
+    prevElevation: number;
+    prevCalories: number;
+    hasPrevData: boolean;
+  } | null;
 }

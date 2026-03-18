@@ -277,6 +277,9 @@ export default function SettingsClient({ user }: Props) {
                   <p className="text-xs text-yellow-300/80">
                     Este processo pode demorar <strong>vários minutos</strong> dependendo do número de atividades. Não feches a página.
                   </p>
+                  <p className="text-xs text-orange-300/80">
+                    Se ficar em falta alguma atividade, experimenta voltar a correr esta sincronização ou cria uma atividade e importa o GPX.
+                  </p>
                 </div>
 
                 {/* Seletor de ano */}

@@ -26,6 +26,7 @@ model User {
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
   isPublic             Boolean      @default(true)
+  lastSyncAt           DateTime?
 
   // Relations
   activities          Activity[]

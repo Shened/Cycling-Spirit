@@ -89,6 +89,33 @@ export default function DashboardClient({ user }: Props) {
     type: "user", id: user.id, label: "O meu Dashboard",
   });
 
+  const [autoSyncing, setAutoSyncing] = useState(false);
+
+  useEffect(() => {
+    if (!user.stravaId) return;
+
+    const runAutoSync = async () => {
+      setAutoSyncing(true);
+      try {
+        const res = await fetch("/api/strava/auto-sync", { method: "POST" });
+        const data = await res.json();
+
+        // Só recarrega as stats se houve sync de facto
+        if (data.synced) {
+          await fetchStats();
+        }
+      } catch {
+        // Silencioso — não interrompe a UX
+      } finally {
+        setAutoSyncing(false);
+      }
+    };
+
+    runAutoSync();
+    // Corre apenas no mount — não depende de fetchStats para não criar loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.stravaId]);
+
   const contextOptions = [
     { type: "user" as const, id: user.id, label: "O meu Dashboard" },
     ...user.teamMemberships.map((m) => ({
@@ -156,20 +183,19 @@ export default function DashboardClient({ user }: Props) {
             {user.stravaId && (
               <button
                 onClick={handleStravaSync}
-                disabled={syncing}
+                disabled={syncing || autoSyncing}
                 className="flex items-center gap-2 bg-[#FC4C02]/10 border border-[#FC4C02]/25 text-[#FC4C02] hover:bg-[#FC4C02]/20 rounded-xl transition-all disabled:opacity-50 px-3 h-9"
+                title={autoSyncing ? "A sincronizar automaticamente..." : "Sincronizar Strava"}
               >
-                {syncing ? <Loader2 className="w-4 h-4 animate-spin shrink-0" /> : <RefreshCw className="w-4 h-4 shrink-0" />}
-                <span className="hidden sm:inline text-xs font-medium">Sync Strava</span>
+                {(syncing || autoSyncing)
+                  ? <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                  : <RefreshCw className="w-4 h-4 shrink-0" />
+                }
+                <span className="hidden sm:inline text-xs font-medium">
+                  {autoSyncing ? "A sincronizar..." : "Sync Strava"}
+                </span>
               </button>
             )}
-            <button
-              onClick={() => setEditingWidgets(true)}
-              className="flex items-center justify-center w-9 h-9 bg-dark-800 border border-white/10 text-neutral-400 hover:text-white hover:border-white/20 rounded-xl transition-all"
-              title="Personalizar widgets"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-            </button>
           </div>
         </div>
 

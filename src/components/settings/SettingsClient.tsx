@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, User, Zap, Activity, Check, Unlink, Bike, Mountain, PersonStanding, Footprints, Waves, Monitor, Eye, EyeOff } from "lucide-react";
+import { Loader2, User, Zap, Activity, Check, Unlink, Bike, Mountain, PersonStanding, Footprints, Waves, Monitor, Eye, EyeOff, History, AlertTriangle } from "lucide-react";
 import { activityTypeLabel, activityTypeIcon, cn } from "@/lib/utils";
 
 const ACTIVITY_TYPES = [
@@ -30,6 +30,10 @@ export default function SettingsClient({ user }: Props) {
   const [saved, setSaved] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
+  const [syncingHistory, setSyncingHistory] = useState(false);
+  const [historySynced, setHistorySynced] = useState<string | null>(null);
+  const [sinceYear, setSinceYear] = useState(new Date().getFullYear() - 1);
+
   const handleSave = async () => {
     setSaving(true);
     const res = await fetch("/api/user/profile", {
@@ -57,6 +61,20 @@ export default function SettingsClient({ user }: Props) {
     const data = await res.json();
     setSyncing(false);
     alert(data.message ?? data.error);
+  };
+
+  const handleHistorySync = async () => {
+    if (!confirm(`Importar atividades desde ${sinceYear}? Isto pode demorar vários minutos dependendo do número de atividades.`)) return;
+    setSyncingHistory(true);
+    setHistorySynced(null);
+    const res = await fetch("/api/strava/sync-history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sinceYear }),
+    });
+    const data = await res.json();
+    setSyncingHistory(false);
+    setHistorySynced(data.message ?? data.error);
   };
 
   const handleStravaDisconnect = async () => {
@@ -244,6 +262,56 @@ export default function SettingsClient({ user }: Props) {
                 {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
                 {syncing ? "A sincronizar..." : "Sincronizar agora"}
               </button>
+              <div className="bg-dark-700 border border-white/8 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <History className="w-4 h-4 text-neutral-400 shrink-0" />
+                  <p className="text-sm font-medium text-white">Importar histórico</p>
+                </div>
+                <p className="text-xs text-neutral-500">
+                  Importa atividades anteriores ao ano atual. Útil para ver comparações ano a ano no dashboard.
+                </p>
+
+                {/* Aviso de duração */}
+                <div className="flex items-start gap-2 bg-yellow-500/8 border border-yellow-500/20 rounded-lg px-3 py-2">
+                  <AlertTriangle className="w-3.5 h-3.5 text-yellow-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-yellow-300/80">
+                    Este processo pode demorar <strong>vários minutos</strong> dependendo do número de atividades. Não feches a página.
+                  </p>
+                </div>
+
+                {/* Seletor de ano */}
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-neutral-400 shrink-0">Desde</label>
+                  <select
+                    value={sinceYear}
+                    onChange={(e) => setSinceYear(parseInt(e.target.value))}
+                    disabled={syncingHistory}
+                    className="flex-1 appearance-none bg-dark-600 border border-white/8 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500 transition-colors disabled:opacity-50"
+                  >
+                    {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 1 - i).map((year) => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleHistorySync}
+                    disabled={syncingHistory}
+                    className="flex items-center gap-2 bg-[#FC4C02]/10 border border-[#FC4C02]/25 text-[#FC4C02] hover:bg-[#FC4C02]/20 text-xs font-medium px-3 py-2 rounded-lg transition-all disabled:opacity-50 shrink-0"
+                  >
+                    {syncingHistory
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> A importar...</>
+                      : <><History className="w-3.5 h-3.5" /> Importar</>
+                    }
+                  </button>
+                </div>
+
+                {/* Resultado */}
+                {historySynced && (
+                  <p className="text-xs text-green-400 flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 shrink-0" />
+                    {historySynced}
+                  </p>
+                )}
+              </div>
               <button
                 onClick={handleStravaDisconnect}
                 className="flex items-center justify-center gap-2 bg-dark-700 border border-white/8 text-neutral-400 hover:text-red-400 hover:border-red-500/20 text-sm px-4 py-2.5 rounded-xl transition-all"

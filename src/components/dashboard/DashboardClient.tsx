@@ -214,6 +214,14 @@ export default function DashboardClient({ user }: Props) {
             <p className="text-neutral-500 text-sm mt-0.5">Estatísticas este mês</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setEditingWidgets(true)}
+              className="flex items-center gap-2 bg-white/5 border border-white/10 text-neutral-400 hover:text-white hover:border-white/20 rounded-xl transition-all px-3 h-9"
+              title="Personalizar Dashboard"
+            >
+              <SlidersHorizontal className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline text-xs font-medium">Widgets</span>
+            </button>
             {user.stravaId && (
               <button
                 onClick={handleStravaSync}
